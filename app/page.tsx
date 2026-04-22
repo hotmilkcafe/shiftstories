@@ -51,15 +51,13 @@ export default function Home() {
 
   useEffect(() => { fetchStories() }, [])
 
-  async function fetchStories(categoryOverride?: string) {
+  async function fetchStories() {
     if (isFetching.current) return
     if (Date.now() < skipFetchUntilMs.current) return
 
     setLoading(true)
     isFetching.current = true
-    const categoryToFetch = categoryOverride ?? category
     let query = supabase.from('stories').select('*').order('created_at', { ascending: false })
-    if (categoryToFetch !== 'All') query = query.eq('category', categoryToFetch)
     try {
       const { data } = await query
       if (Date.now() < skipFetchUntilMs.current) return
@@ -83,6 +81,10 @@ export default function Home() {
       setLoading(false)
     }
   }
+
+  const visibleStories = category === 'All'
+    ? stories
+    : stories.filter(s => s.category === category)
 
   async function handleReact(id: number, field: 'ha_count' | 'same_count', current: number) {
     skipFetchUntilMs.current = Date.now() + 1500
@@ -153,7 +155,6 @@ export default function Home() {
               key={c}
               onClick={() => {
                 setCategory(c)
-                fetchStories(c)
               }}
               className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition-colors ${category === c ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-white text-gray-500 border-gray-200'}`}>
               {c}
@@ -167,7 +168,7 @@ export default function Home() {
           {!loading && stories.length === 0 && (
             <p className="text-center text-gray-400 text-sm py-8">No stories yet — be the first!</p>
           )}
-          {stories.map(story => (
+          {visibleStories.map(story => (
             <div key={story.id} className="relative bg-white rounded-2xl border border-gray-100 p-4">
               <Link
                 href={`/stories/${story.id}`}
