@@ -149,11 +149,11 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
                 <div className="flex gap-2">
-                  <button onClick={() => handleReact(story.id, 'ha_count')}
+                  <button onClick={(e) => { e.stopPropagation(); handleReact(story.id, 'ha_count') }}
                     className={`text-xs px-3 py-1 rounded-full border transition-colors ${haLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500'}`}>
                     ❤️ {story.ha_count || 0}
                   </button>
-                  <button onClick={() => handleReact(story.id, 'same_count')}
+                  <button onClick={(e) => { e.stopPropagation(); handleReact(story.id, 'same_count') }}
                     className={`text-xs px-3 py-1 rounded-full border transition-colors ${sameLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500'}`}>
                     🤣 {story.same_count || 0}
                   </button>
