@@ -49,16 +49,17 @@ export default function Home() {
     setSameLiked(readIds('same_liked'))
   }, [])
 
-  useEffect(() => { fetchStories() }, [category])
+  useEffect(() => { fetchStories() }, [])
 
-  async function fetchStories() {
+  async function fetchStories(categoryOverride?: string) {
     if (isFetching.current) return
     if (Date.now() < skipFetchUntilMs.current) return
 
     setLoading(true)
     isFetching.current = true
+    const categoryToFetch = categoryOverride ?? category
     let query = supabase.from('stories').select('*').order('created_at', { ascending: false })
-    if (category !== 'All') query = query.eq('category', category)
+    if (categoryToFetch !== 'All') query = query.eq('category', categoryToFetch)
     try {
       const { data } = await query
       if (Date.now() < skipFetchUntilMs.current) return
@@ -134,7 +135,12 @@ export default function Home() {
         {/* Filters */}
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-gray-100 bg-white">
           {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)}
+            <button
+              key={c}
+              onClick={() => {
+                setCategory(c)
+                fetchStories(c)
+              }}
               className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition-colors ${category === c ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-white text-gray-500 border-gray-200'}`}>
               {c}
             </button>
