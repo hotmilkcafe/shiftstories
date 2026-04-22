@@ -104,11 +104,11 @@ export default function StoryPage() {
             <p className="text-base text-gray-800 leading-relaxed mb-4">{story.tale}</p>
             <p className="text-xs text-gray-300 mb-4">{story.venue} · {timeAgo(story.created_at)}</p>
             <div className="flex gap-2">
-              <button onClick={() => handleReact('ha_count', story.ha_count)}
+              <button onClick={() => handleReact('ha_count', Number(story.ha_count || 0))}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
                 ha {story.ha_count}
               </button>
-              <button onClick={() => handleReact('same_count', story.same_count)}
+              <button onClick={() => handleReact('same_count', Number(story.same_count || 0))}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
                 same {story.same_count}
               </button>
