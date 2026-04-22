@@ -79,7 +79,7 @@ export default function StoryPage() {
     <div className="min-h-screen bg-gray-50 font-sans">
       <div className="max-w-lg mx-auto">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-          <button oonClick={() => router.push('/')} className="text-gray-400 text-sm">
+          <button onClick={() => router.push('/')} className="text-gray-400 text-sm">
             back
           </button>
           <span className="text-lg font-medium tracking-tight">shift<span className="text-orange-500">stories</span></span>
@@ -104,15 +104,15 @@ export default function StoryPage() {
             <p className="text-base text-gray-800 leading-relaxed mb-4">{story.tale}</p>
             <p className="text-xs text-gray-300 mb-4">{story.venue} · {timeAgo(story.created_at)}</p>
             <div className="flex gap-2">
-              <button oonClick={() => handleReact('ha_count', story.ha_count)}
+              <button onClick={() => handleReact('ha_count', story.ha_count)}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
                 ha {story.ha_count}
               </button>
-              <button oonClick={() => handleReact('same_count', story.same_count)}
+              <button onClick={() => handleReact('same_count', story.same_count)}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
                 same {story.same_count}
               </button>
-              <button oonClick={handleShare}
+              <button onClick={handleShare}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors ml-auto">
                 {copied ? 'copied!' : 'share'}
               </button>
@@ -120,7 +120,7 @@ export default function StoryPage() {
           </div>
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-400 mb-2">More tales from the industry</p>
-            <button oonClick={() => router.push('/')}
+            <button onClick={() => router.push('/')}
               className="bg-orange-500 text-white text-sm font-medium px-6 py-2.5 rounded-full">
               Read more stories
             </button>
