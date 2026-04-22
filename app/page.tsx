@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
-const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Chaos gremlin']
+const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Twat']
 
 type Story = {
   id: number
@@ -21,7 +21,7 @@ const categoryColours: Record<string, string> = {
   'Wholesome': 'bg-green-100 text-green-800',
   'Legend': 'bg-purple-100 text-purple-800',
   'Language barrier': 'bg-blue-100 text-blue-800',
-  'Chaos gremlin': 'bg-orange-100 text-orange-800',
+  'Twat': 'bg-orange-100 text-orange-800',
 }
 
 export default function Home() {
