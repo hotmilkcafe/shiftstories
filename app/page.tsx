@@ -87,6 +87,11 @@ export default function Home() {
           </button>
         </div>
 
+        <div className="bg-white border-b border-gray-100 px-4 py-6 text-center">
+          <p className="font-medium text-gray-800">Customer reviews.</p>
+          <p className="text-sm text-gray-400 mt-1">Written by the staff, not the other way round.</p>
+        </div>
+
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-gray-100 bg-white">
           {CATEGORIES.map(c => (
             <button key={c} onClick={() => setCategory(c)}
