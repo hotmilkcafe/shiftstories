@@ -22,11 +22,30 @@ export default function Home() {
   const [category, setCategory] = useState('All')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [haLiked, setHaLiked] = useState<number[]>([])
+  const [sameLiked, setSameLiked] = useState<number[]>([])
   const [form, setForm] = useState({
     descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    function readIds(key: 'ha_liked' | 'same_liked') {
+      try {
+        const raw = localStorage.getItem(key)
+        if (!raw) return []
+        const parsed = JSON.parse(raw)
+        if (!Array.isArray(parsed)) return []
+        return parsed.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+      } catch {
+        return []
+      }
+    }
+
+    setHaLiked(readIds('ha_liked'))
+    setSameLiked(readIds('same_liked'))
+  }, [])
 
   useEffect(() => { fetchStories() }, [category])
 
@@ -40,8 +59,18 @@ export default function Home() {
   }
 
   async function handleReact(id: number, field: 'ha_count' | 'same_count', current: number) {
+    const key = field === 'ha_count' ? 'ha_liked' : 'same_liked'
+    const liked = field === 'ha_count' ? haLiked : sameLiked
+    const setLiked = field === 'ha_count' ? setHaLiked : setSameLiked
+
+    if (liked.includes(id)) return
+
     await supabase.from('stories').update({ [field]: current + 1 }).eq('id', id)
     setStories(stories.map(s => s.id === id ? { ...s, [field]: current + 1 } : s))
+
+    const nextLiked = [...liked, id]
+    setLiked(nextLiked)
+    localStorage.setItem(key, JSON.stringify(nextLiked))
   }
 
   async function handleSubmit() {
@@ -124,13 +153,19 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
                 <div className="relative z-10 flex gap-2">
-                  <button onClick={() => handleReact(story.id, 'ha_count', story.ha_count)}
-                    className="text-xs px-3 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
-                    ha {story.ha_count}
+                  <button onClick={() => handleReact(story.id, 'ha_count', Number(story.ha_count || 0))}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${haLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
+                    <span className="inline-flex items-center gap-2">
+                      <span aria-hidden>❤️</span>
+                      <span>{Number(story.ha_count || 0)}</span>
+                    </span>
                   </button>
-                  <button onClick={() => handleReact(story.id, 'same_count', story.same_count)}
-                    className="text-xs px-3 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
-                    same {story.same_count}
+                  <button onClick={() => handleReact(story.id, 'same_count', Number(story.same_count || 0))}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${sameLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
+                    <span className="inline-flex items-center gap-2">
+                      <span aria-hidden>🤣</span>
+                      <span>{Number(story.same_count || 0)}</span>
+                    </span>
                   </button>
                 </div>
               </div>
