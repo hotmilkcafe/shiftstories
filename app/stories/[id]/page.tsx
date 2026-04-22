@@ -30,6 +30,8 @@ export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [haLiked, setHaLiked] = useState<number[]>([])
+  const [sameLiked, setSameLiked] = useState<number[]>([])
 
   useEffect(() => {
     async function fetchStory() {
@@ -44,9 +46,38 @@ export default function StoryPage() {
     fetchStory()
   }, [id])
 
+  useEffect(() => {
+    function readIds(key: 'ha_liked' | 'same_liked') {
+      try {
+        const raw = localStorage.getItem(key)
+        if (!raw) return []
+        const parsed = JSON.parse(raw)
+        if (!Array.isArray(parsed)) return []
+        return parsed.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+      } catch {
+        return []
+      }
+    }
+
+    setHaLiked(readIds('ha_liked'))
+    setSameLiked(readIds('same_liked'))
+  }, [])
+
   async function handleReact(field: 'ha_count' | 'same_count', current: number) {
     if (!story) return
+
+    const key = field === 'ha_count' ? 'ha_liked' : 'same_liked'
+    const liked = field === 'ha_count' ? haLiked : sameLiked
+    const setLiked = field === 'ha_count' ? setHaLiked : setSameLiked
+
+    if (liked.includes(story.id)) return
+
     await supabase.from('stories').update({ [field]: current + 1 }).eq('id', story.id)
+
+    const nextLiked = [...liked, story.id]
+    setLiked(nextLiked)
+    localStorage.setItem(key, JSON.stringify(nextLiked))
+
     setStory({ ...story, [field]: current + 1 })
   }
 
@@ -117,11 +148,11 @@ export default function StoryPage() {
             <p className="text-xs text-gray-300 mb-4">{story.venue} · {timeAgo(story.created_at)}</p>
             <div className="flex gap-2">
               <button onClick={() => handleReact('ha_count', Number(story.ha_count || 0))}
-                className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
+                className={`text-sm px-4 py-2 rounded-full border transition-colors ${haLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
                 ha {story.ha_count}
               </button>
               <button onClick={() => handleReact('same_count', Number(story.same_count || 0))}
-                className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors">
+                className={`text-sm px-4 py-2 rounded-full border transition-colors ${sameLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
                 same {story.same_count}
               </button>
               <button onClick={handleShare}
