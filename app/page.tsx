@@ -63,7 +63,21 @@ export default function Home() {
     try {
       const { data } = await query
       if (Date.now() < skipFetchUntilMs.current) return
-      setStories(data || [])
+      setStories(prev => {
+        const incoming = data || []
+        if (prev.length === 0) return incoming
+
+        const prevById = new Map(prev.map(s => [s.id, s]))
+        return incoming.map((s) => {
+          const existing = prevById.get(s.id)
+          if (!existing) return s
+          return {
+            ...s,
+            ha_count: Math.max(Number(existing.ha_count || 0), Number(s.ha_count || 0)),
+            same_count: Math.max(Number(existing.same_count || 0), Number(s.same_count || 0)),
+          }
+        })
+      })
     } finally {
       isFetching.current = false
       setLoading(false)
