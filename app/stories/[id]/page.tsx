@@ -3,28 +3,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 
-function getCookieVoted(): number[] {
-  if (typeof document === 'undefined') return []
-  const cookies = document.cookie ? document.cookie.split('; ') : []
-  const entry = cookies.find(c => c.startsWith('voted='))
-  if (!entry) return []
-  const raw = entry.slice('voted='.length)
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw))
-    if (!Array.isArray(parsed)) return []
-    return parsed.map((v) => Number(v)).filter((v) => Number.isFinite(v))
-  } catch {
-    return []
-  }
-}
-
-function setCookieVoted(ids: number[]) {
-  if (typeof document === 'undefined') return
-  const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
-  const value = encodeURIComponent(JSON.stringify(ids))
-  document.cookie = `voted=${value}; expires=${expires}; path=/; SameSite=Lax`
-}
-
 type Story = {
   id: number
   descriptor: string
@@ -50,13 +28,9 @@ export default function StoryPage() {
   const router = useRouter()
   const [story, setStory] = useState<Story | null>(null)
   const [loading, setLoading] = useState(true)
-  const [voted, setVoted] = useState<number[]>([])
   const [shared, setShared] = useState(false)
 
   useEffect(() => {
-    try {
-      setVoted(getCookieVoted())
-    } catch { }
     async function fetchStory() {
       const { data } = await supabase.from('stories').select('*').eq('id', id).single()
       setStory(data)
@@ -64,16 +38,6 @@ export default function StoryPage() {
     }
     fetchStory()
   }, [id])
-
-  async function handleVote() {
-    if (!story || voted.includes(story.id)) return
-    const newVoted = [...voted, story.id]
-    setVoted(newVoted)
-    setCookieVoted(newVoted)
-    const newCount = (story.ha_count || 0) + 1
-    setStory({ ...story, ha_count: newCount })
-    await supabase.from('stories').update({ ha_count: newCount }).eq('id', story.id)
-  }
 
   async function handleShare() {
     if (navigator.share) {
@@ -116,17 +80,6 @@ export default function StoryPage() {
 
         <div className="px-4 py-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 flex gap-4">
-
-            <div className="flex flex-col items-center gap-1 pt-0.5">
-              <button
-                onClick={handleVote}
-                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${voted.includes(story.id) ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-200 text-gray-400 hover:border-orange-300 hover:text-orange-400'}`}>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                  <polygon points="5,1 9,9 1,9"/>
-                </svg>
-              </button>
-              <span className="text-sm font-medium text-gray-500">{story.ha_count || 0}</span>
-            </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between mb-3">

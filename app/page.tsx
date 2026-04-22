@@ -2,28 +2,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
-function getCookieVoted(): number[] {
-  if (typeof document === 'undefined') return []
-  const cookies = document.cookie ? document.cookie.split('; ') : []
-  const entry = cookies.find(c => c.startsWith('voted='))
-  if (!entry) return []
-  const raw = entry.slice('voted='.length)
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw))
-    if (!Array.isArray(parsed)) return []
-    return parsed.map((v) => Number(v)).filter((v) => Number.isFinite(v))
-  } catch {
-    return []
-  }
-}
-
-function setCookieVoted(ids: number[]) {
-  if (typeof document === 'undefined') return
-  const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
-  const value = encodeURIComponent(JSON.stringify(ids))
-  document.cookie = `voted=${value}; expires=${expires}; path=/; SameSite=Lax`
-}
-
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Chaos gremlin']
 
 type Story = {
@@ -52,7 +30,6 @@ export default function Home() {
   const [sort, setSort] = useState<'new' | 'top'>('new')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [voted, setVoted] = useState<number[]>([])
   const [form, setForm] = useState({
     descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3
   })
@@ -60,9 +37,6 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    try {
-      setVoted(getCookieVoted())
-    } catch { }
     fetchStories()
   }, [])
 
@@ -80,15 +54,6 @@ export default function Home() {
 
   const filtered = category === 'All' ? allStories : allStories.filter(s => s.category === category)
   const stories = getSorted(filtered)
-
-  async function handleVote(id: number, currentCount: number) {
-    if (voted.includes(id)) return
-    const newVoted = [...voted, id]
-    setVoted(newVoted)
-    setCookieVoted(newVoted)
-    setAllStories(prev => prev.map(s => s.id === id ? { ...s, ha_count: (s.ha_count || 0) + 1 } : s))
-    await supabase.from('stories').update({ ha_count: currentCount + 1 }).eq('id', id)
-  }
 
   async function handleSubmit() {
     if (!form.tale || !form.descriptor || !form.venue) return
@@ -148,18 +113,8 @@ export default function Home() {
             <p className="text-center text-gray-400 text-sm py-8">No stories yet — be the first!</p>
           )}
           {stories.map(story => (
-            <div key={story.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3">
-              <div className="flex flex-col items-center gap-1 pt-0.5">
-                <button
-                  onClick={() => handleVote(story.id, story.ha_count || 0)}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center border transition-colors ${voted.includes(story.id) ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-200 text-gray-400 hover:border-orange-300 hover:text-orange-400'}`}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                    <polygon points="5,1 9,9 1,9"/>
-                  </svg>
-                </button>
-                <span className="text-xs font-medium text-gray-500">{story.ha_count || 0}</span>
-              </div>
-              <a href={`/stories/${story.id}`} className="flex-1 min-w-0">
+            <div key={story.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+              <a href={`/stories/${story.id}`} className="block">
                 <div className="flex items-start justify-between mb-1">
                   <span className="text-xs text-gray-400 italic flex-1 pr-2">{story.descriptor}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
