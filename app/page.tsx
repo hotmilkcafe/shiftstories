@@ -2,6 +2,28 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
+function getCookieVoted(): number[] {
+  if (typeof document === 'undefined') return []
+  const cookies = document.cookie ? document.cookie.split('; ') : []
+  const entry = cookies.find(c => c.startsWith('voted='))
+  if (!entry) return []
+  const raw = entry.slice('voted='.length)
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw))
+    if (!Array.isArray(parsed)) return []
+    return parsed.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+  } catch {
+    return []
+  }
+}
+
+function setCookieVoted(ids: number[]) {
+  if (typeof document === 'undefined') return
+  const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+  const value = encodeURIComponent(JSON.stringify(ids))
+  document.cookie = `voted=${value}; expires=${expires}; path=/; SameSite=Lax`
+}
+
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Chaos gremlin']
 
 type Story = {
@@ -39,8 +61,7 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      const v = JSON.parse(localStorage.getItem('voted') || '[]')
-      setVoted(Array.isArray(v) ? v.map(Number) : [])
+      setVoted(getCookieVoted())
     } catch { }
     fetchStories()
   }, [])
@@ -64,7 +85,7 @@ export default function Home() {
     if (voted.includes(id)) return
     const newVoted = [...voted, id]
     setVoted(newVoted)
-    localStorage.setItem('voted', JSON.stringify(newVoted))
+    setCookieVoted(newVoted)
     setAllStories(prev => prev.map(s => s.id === id ? { ...s, ha_count: (s.ha_count || 0) + 1 } : s))
     await supabase.from('stories').update({ ha_count: currentCount + 1 }).eq('id', id)
   }
