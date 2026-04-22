@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import Link from 'next/link'
 import { supabase } from './supabase'
 
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Chaos gremlin']
@@ -121,7 +122,12 @@ export default function Home() {
           {stories.map(story => (
             <div key={story.id} className="bg-white rounded-2xl border border-gray-100 p-4">
               <div className="flex items-start justify-between mb-2">
-                <span className="text-xs text-gray-400 italic flex-1 pr-2">{story.descriptor}</span>
+                <Link
+                  href={`/stories/${story.id}`}
+                  className="text-xs text-gray-400 italic flex-1 pr-2 hover:text-gray-500"
+                >
+                  {story.descriptor}
+                </Link>
                 <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
                   {story.category}
                 </span>
@@ -134,7 +140,12 @@ export default function Home() {
                 ))}
                 <span className="text-xs text-gray-300 ml-1">staff experience</span>
               </div>
-              <p className="text-sm text-gray-800 leading-relaxed mb-3">{story.tale}</p>
+              <Link
+                href={`/stories/${story.id}`}
+                className="text-sm text-gray-800 leading-relaxed mb-3 block hover:text-gray-900"
+              >
+                {story.tale}
+              </Link>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
                 <div className="flex gap-2">
