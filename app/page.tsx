@@ -31,8 +31,6 @@ export default function Home() {
   const [category, setCategory] = useState('All')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [haLiked, setHaLiked] = useState<number[]>([])
-  const [sameLiked, setSameLiked] = useState<number[]>([])
   const [form, setForm] = useState({
     descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3
   })
@@ -41,12 +39,6 @@ export default function Home() {
   const storiesRef = useRef<Story[]>([])
 
   useEffect(() => {
-    try {
-      const ha = JSON.parse(localStorage.getItem('ha_liked') || '[]')
-      const same = JSON.parse(localStorage.getItem('same_liked') || '[]')
-      setHaLiked(Array.isArray(ha) ? ha.map(Number) : [])
-      setSameLiked(Array.isArray(same) ? same.map(Number) : [])
-    } catch { }
     fetchStories()
   }, [])
 
@@ -60,18 +52,6 @@ export default function Home() {
   }
 
   const stories = category === 'All' ? allStories : allStories.filter(s => s.category === category)
-
-  async function handleReact(id: number, field: 'ha_count' | 'same_count') {
-    const liked = field === 'ha_count' ? haLiked : sameLiked
-    const setLiked = field === 'ha_count' ? setHaLiked : setSameLiked
-    const key = field === 'ha_count' ? 'ha_liked' : 'same_liked'
-    if (liked.includes(id)) return
-    const newLiked = [...liked, id]
-    setLiked(newLiked)
-    localStorage.setItem(key, JSON.stringify(newLiked))
-    setAllStories(prev => prev.map(s => s.id === id ? { ...s, [field]: (s[field] || 0) + 1 } : s))
-    await supabase.from('stories').update({ [field]: (storiesRef.current.find(s => s.id === id)?.[field] || 0) + 1 }).eq('id', id)
-  }
 
   async function handleSubmit() {
     if (!form.tale || !form.descriptor || !form.venue) return
@@ -148,16 +128,7 @@ export default function Home() {
               </Link>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
-                <div className="flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); handleReact(story.id, 'ha_count') }}
-                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${haLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500'}`}>
-                    ❤️ {story.ha_count || 0}
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleReact(story.id, 'same_count') }}
-                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${sameLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500'}`}>
-                    🤣 {story.same_count || 0}
-                  </button>
-                </div>
+                <div />
               </div>
             </div>
           ))}
