@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from './supabase'
 
@@ -24,6 +24,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [haLiked, setHaLiked] = useState<number[]>([])
   const [sameLiked, setSameLiked] = useState<number[]>([])
+  const isFetching = useRef(false)
+  const skipFetchUntilMs = useRef(0)
   const [form, setForm] = useState({
     descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3
   })
@@ -50,15 +52,26 @@ export default function Home() {
   useEffect(() => { fetchStories() }, [category])
 
   async function fetchStories() {
+    if (isFetching.current) return
+    if (Date.now() < skipFetchUntilMs.current) return
+
     setLoading(true)
+    isFetching.current = true
     let query = supabase.from('stories').select('*').order('created_at', { ascending: false })
     if (category !== 'All') query = query.eq('category', category)
-    const { data } = await query
-    setStories(data || [])
-    setLoading(false)
+    try {
+      const { data } = await query
+      if (Date.now() < skipFetchUntilMs.current) return
+      setStories(data || [])
+    } finally {
+      isFetching.current = false
+      setLoading(false)
+    }
   }
 
   async function handleReact(id: number, field: 'ha_count' | 'same_count', current: number) {
+    skipFetchUntilMs.current = Date.now() + 1500
+
     const key = field === 'ha_count' ? 'ha_liked' : 'same_liked'
     const liked = field === 'ha_count' ? haLiked : sameLiked
     const setLiked = field === 'ha_count' ? setHaLiked : setSameLiked
