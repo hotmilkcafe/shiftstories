@@ -65,12 +65,19 @@ export default function Home() {
 
     if (liked.includes(id)) return
 
-    await supabase.from('stories').update({ [field]: current + 1 }).eq('id', id)
-    setStories(stories.map(s => s.id === id ? { ...s, [field]: current + 1 } : s))
-
     const nextLiked = [...liked, id]
     setLiked(nextLiked)
     localStorage.setItem(key, JSON.stringify(nextLiked))
+
+    setStories(prev => prev.map(s => s.id === id ? { ...s, [field]: Number(s[field] || 0) + 1 } : s))
+
+    const { error } = await supabase.from('stories').update({ [field]: current + 1 }).eq('id', id)
+    if (error) {
+      setStories(prev => prev.map(s => s.id === id ? { ...s, [field]: Math.max(0, Number(s[field] || 0) - 1) } : s))
+      const rolledBack = nextLiked.filter(storyId => storyId !== id)
+      setLiked(rolledBack)
+      localStorage.setItem(key, JSON.stringify(rolledBack))
+    }
   }
 
   async function handleSubmit() {
