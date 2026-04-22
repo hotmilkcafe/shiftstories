@@ -149,11 +149,11 @@ export default function StoryPage() {
             <div className="flex gap-2">
               <button onClick={() => handleReact('ha_count', Number(story.ha_count || 0))}
                 className={`text-sm px-4 py-2 rounded-full border transition-colors ${haLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
-                ha {story.ha_count}
+                ha {Number(story.ha_count || 0)}
               </button>
               <button onClick={() => handleReact('same_count', Number(story.same_count || 0))}
                 className={`text-sm px-4 py-2 rounded-full border transition-colors ${sameLiked.includes(story.id) ? 'bg-orange-50 text-orange-600 border-orange-200' : 'border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200'}`}>
-                same {story.same_count}
+                same {Number(story.same_count || 0)}
               </button>
               <button onClick={handleShare}
                 className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors ml-auto">
