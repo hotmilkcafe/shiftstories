@@ -50,8 +50,20 @@ export default function StoryPage() {
     setStory({ ...story, [field]: current + 1 })
   }
 
-  function handleShare() {
-    navigator.clipboard.writeText(window.location.href)
+  async function handleShare() {
+    const url = window.location.href
+    const title = story?.descriptor || 'shiftstories'
+
+    if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, text: title, url })
+        return
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+      }
+    }
+
+    await navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
