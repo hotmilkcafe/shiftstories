@@ -10,8 +10,6 @@ type Story = {
   category: string
   tale: string
   venue: string
-  stars: number
-  ha_count: number
   created_at: string
 }
 
@@ -31,7 +29,7 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
-    descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3
+    descriptor: '', category: 'Unhinged', tale: '', venue: ''
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -48,7 +46,7 @@ export default function Home() {
   }
 
   function getSorted(stories: Story[]) {
-    if (sort === 'top') return [...stories].sort((a, b) => (b.ha_count || 0) - (a.ha_count || 0))
+    if (sort === 'top') return [...stories].sort((a, b) => (b as any).ha_count - (a as any).ha_count)
     return stories
   }
 
@@ -61,7 +59,7 @@ export default function Home() {
     await supabase.from('stories').insert([form])
     setSubmitting(false)
     setSubmitted(true)
-    setForm({ descriptor: '', category: 'Unhinged', tale: '', venue: '', stars: 3 })
+    setForm({ descriptor: '', category: 'Unhinged', tale: '', venue: '' })
     setTimeout(async () => {
       setSubmitted(false)
       setShowForm(false)
@@ -126,16 +124,21 @@ export default function Home() {
                     {story.category}
                   </span>
                 </div>
-                <div className="flex gap-0.5 mb-2">
-                  {[1,2,3,4,5].map(i => (
-                    <svg key={i} className="w-3 h-3" viewBox="0 0 14 14" fill={i <= story.stars ? '#f97316' : 'none'} stroke="#f97316" strokeWidth="1.5">
-                      <polygon points="7,1 8.8,5.2 13.4,5.6 10,8.6 11,13 7,10.5 3,13 4,8.6 0.6,5.6 5.2,5.2"/>
-                    </svg>
-                  ))}
-                </div>
                 <p className="text-sm text-gray-800 leading-relaxed mb-2">{story.tale}</p>
-                <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
-              </a>
+                <div className="flex items-center justify-between">
+  <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
+  <button onClick={async (e) => {
+    e.preventDefault()
+    const url = `${window.location.origin}/stories/${story.id}`
+    if (navigator.share) {
+      await navigator.share({ title: `ShiftStories`, url })
+    } else {
+      navigator.clipboard.writeText(url)
+    }
+  }} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-400 transition-colors">
+    share
+  </button>
+</div>              </a>
             </div>
           ))}
         </div>
@@ -176,18 +179,6 @@ export default function Home() {
                     <input value={form.venue} onChange={e => setForm({...form, venue: e.target.value})}
                       placeholder="e.g. Cafe, Bristol"
                       className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300"/>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-400">Staff experience (1–5 stars)</label>
-                    <div className="flex gap-2">
-                      {[1,2,3,4,5].map(i => (
-                        <button key={i} onClick={() => setForm({...form, stars: i})}>
-                          <svg className="w-6 h-6" viewBox="0 0 14 14" fill={i <= form.stars ? '#f97316' : 'none'} stroke="#f97316" strokeWidth="1.5">
-                            <polygon points="7,1 8.8,5.2 13.4,5.6 10,8.6 11,13 7,10.5 3,13 4,8.6 0.6,5.6 5.2,5.2"/>
-                          </svg>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                   <button onClick={handleSubmit} disabled={submitting}
                     className="bg-orange-500 text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50">
