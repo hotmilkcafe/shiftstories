@@ -126,19 +126,20 @@ export default function Home() {
                 </div>
                 <p className="text-sm text-gray-800 leading-relaxed mb-2">{story.tale}</p>
                 <div className="flex items-center justify-between">
-  <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
-  <button onClick={async (e) => {
-    e.preventDefault()
-    const url = `${window.location.origin}/stories/${story.id}`
-    if (navigator.share) {
-      await navigator.share({ title: `ShiftStories`, url })
-    } else {
-      navigator.clipboard.writeText(url)
-    }
-  }} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-400 transition-colors">
-    share
-  </button>
-</div>              </a>
+                  <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
+                  <button onClick={async (e) => {
+                    e.preventDefault()
+                    const url = `${window.location.origin}/stories/${story.id}`
+                    if (navigator.share) {
+                      await navigator.share({ title: 'ShiftStories', url })
+                    } else {
+                      navigator.clipboard.writeText(url)
+                    }
+                  }} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-400 transition-colors">
+                    share
+                  </button>
+                </div>
+              </a>
             </div>
           ))}
         </div>
@@ -181,15 +182,6 @@ export default function Home() {
                       className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300"/>
                   </div>
                   <button onClick={handleSubmit} disabled={submitting}
-                    className="bg-orange-500 text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50">
-                    {submitting ? 'Posting...' : 'Post your tale'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-               <button onClick={handleSubmit} disabled={submitting}
                     className="bg-orange-500 text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50">
                     {submitting ? 'Posting...' : 'Post your tale'}
                   </button>
