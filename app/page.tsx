@@ -189,6 +189,19 @@ export default function Home() {
             </div>
           </div>
         )}
+               <button onClick={handleSubmit} disabled={submitting}
+                    className="bg-orange-500 text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50">
+                    {submitting ? 'Posting...' : 'Post your tale'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="text-center py-6 border-t border-gray-100">
+          <p className="text-xs text-gray-300">questions or feedback? <a href="mailto:shiftstoriesfyi@gmail.com" className="text-orange-400">shiftstoriesfyi@gmail.com</a></p>
+        </div>
 
       </div>
     </div>
