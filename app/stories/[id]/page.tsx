@@ -3,6 +3,47 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const { data: story } = await supabase
+    .from('stories')
+    .select('tale, category, descriptor')
+    .eq('id', params.id)
+    .single()
+
+  if (!story) {
+    return { title: 'ShiftStories' }
+  }
+
+  const snippet = story.tale.length > 120 ? story.tale.substring(0, 120) + '...' : story.tale
+  const title = `${story.category} — ${story.descriptor} | ShiftStories`
+
+  return {
+    title,
+    description: snippet,
+    openGraph: {
+      title,
+      description: snippet,
+      url: `https://www.shiftstories.fyi/stories/${params.id}`,
+      siteName: 'ShiftStories',
+      images: [
+        {
+          url: 'https://www.shiftstories.fyi/og-default.png',
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: snippet,
+      images: ['https://www.shiftstories.fyi/og-default.png'],
+    },
+  }
+}
+
 type Story = {
   id: number
   descriptor: string
@@ -78,7 +119,6 @@ export default function StoryPage() {
     <div className="min-h-screen font-sans" style={{ background: '#f5f5f0' }}>
       <div className="max-w-lg mx-auto">
 
-        {/* NAV */}
         <div className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between" style={{ background: '#1a1a2e' }}>
           <button onClick={() => router.push('/')} className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>
             ← back
@@ -89,24 +129,19 @@ export default function StoryPage() {
           <div style={{ width: 48 }} />
         </div>
 
-        {/* HERO BAR */}
         <div style={{ background: '#1a1a2e', borderBottom: '3px solid #FF6B6B', height: 4 }} />
 
-        {/* STORY CARD */}
         <div className="px-4 py-6">
           <div className="bg-white p-6" style={{ borderRadius: '24px', border: '1.5px solid #1a1a2e08', boxShadow: '0 1px 3px rgba(26,26,46,0.05)' }}>
-
             <div className="flex items-start justify-between mb-4">
               <span className="text-sm italic" style={{ color: '#1a1a2e55' }}>{story.descriptor}</span>
               <span className={`text-xs font-semibold px-3 py-1 rounded-full shrink-0 ml-2 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
                 {story.category}
               </span>
             </div>
-
-            <p className="text-base leading-relaxed mb-6" style={{ color: '#1a1a2e', fontWeight: 400 }}>
+            <p className="text-base leading-relaxed mb-6" style={{ color: '#1a1a2e' }}>
               {story.tale}
             </p>
-
             <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid #1a1a2e08' }}>
               <span className="text-xs" style={{ color: '#1a1a2e33' }}>
                 {story.venue} · {timeAgo(story.created_at)}
@@ -114,12 +149,7 @@ export default function StoryPage() {
               <button
                 onClick={handleShare}
                 className="text-xs font-semibold px-4 py-2 transition-all active:scale-95"
-                style={{
-                  borderRadius: '999px',
-                  border: '1.5px solid #FF6B6B44',
-                  color: '#FF6B6B',
-                  background: '#FF6B6B0d',
-                }}
+                style={{ borderRadius: '999px', border: '1.5px solid #FF6B6B44', color: '#FF6B6B', background: '#FF6B6B0d' }}
               >
                 {shared ? 'link copied!' : 'share'}
               </button>
@@ -127,18 +157,12 @@ export default function StoryPage() {
           </div>
         </div>
 
-        {/* BACK LINK */}
         <div className="px-4 pb-8 text-center">
-          <button
-            onClick={() => router.push('/')}
-            className="text-sm font-bold transition-all active:scale-95"
-            style={{ color: '#1a1a2e55' }}
-          >
+          <button onClick={() => router.push('/')} className="text-sm font-bold" style={{ color: '#1a1a2e55' }}>
             ← Read more tales
           </button>
         </div>
 
-        {/* FOOTER */}
         <div className="text-center py-6" style={{ borderTop: '1px solid #1a1a2e0d' }}>
           <p className="text-xs" style={{ color: '#1a1a2e33' }}>
             questions or feedback?{' '}
