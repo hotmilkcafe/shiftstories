@@ -1,17 +1,26 @@
-import { createClient } from '@supabase/supabase-js'
 import StoryClient from './StoryClient'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+async function getStory(id: string) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/stories?id=eq.${id}&select=tale,category,descriptor`,
+      {
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        next: { revalidate: 60 },
+      }
+    )
+    const data = await res.json()
+    return data?.[0] || null
+  } catch {
+    return null
+  }
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const { data: story } = await supabase
-    .from('stories')
-    .select('tale, category, descriptor')
-    .eq('id', params.id)
-    .single()
+  const story = await getStory(params.id)
 
   if (!story) return { title: 'ShiftStories' }
 
