@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 
-
-
+const BG = '#f0ede6'
+const INK = '#1a1a1a'
 
 type Story = {
   id: number
@@ -16,28 +16,97 @@ type Story = {
   created_at: string
 }
 
-
-
-
-const categoryColours: Record<string, string> = {
-  'Unhinged':         'bg-pink-100 text-pink-700',
-  'Food crime':       'bg-amber-100 text-amber-700',
-  'Wholesome':        'bg-green-100 text-green-700',
-  'Legend':           'bg-purple-100 text-purple-700',
-  'Language barrier': 'bg-blue-100 text-blue-700',
-  'Twat':             'bg-red-100 text-red-600',
-}
-
-
-
-
 export default function StoryClient({ id }: { id: string }) {
   const router = useRouter()
   const [story, setStory] = useState<Story | null>(null)
   const [loading, setLoading] = useState(true)
   const [shared, setShared] = useState(false)
 
-
-
-
   useEffect(() => {
+    async function fetchStory() {
+      const { data } = await supabase.from('stories').select('*').eq('id', id).single()
+      setStory(data)
+      setLoading(false)
+    }
+    fetchStory()
+  }, [id])
+
+  function timeAgo(date: string) {
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000)
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+    return `${Math.floor(seconds / 86400)}d ago`
+  }
+
+  async function handleShare() {
+    if (!story) return
+    const url = window.location.href
+    const snippet = story.tale.length > 140 ? story.tale.substring(0, 140) + '...' : story.tale
+    const text = `"${snippet}" — Shift Stories`
+    if (navigator.share) {
+      await navigator.share({ title: 'Shift Stories', text, url })
+    } else {
+      navigator.clipboard.writeText(`${text}\n${url}`)
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
+    }
+  }
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif' }}>
+      <p style={{ fontSize: '13px', color: `${INK}44` }}>Loading...</p>
+    </div>
+  )
+
+  if (!story) return (
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '16px', fontFamily: 'system-ui, sans-serif' }}>
+      <p style={{ fontSize: '13px', color: `${INK}44` }}>Story not found.</p>
+      <button onClick={() => router.push('/')} style={{ fontSize: '13px', fontWeight: 700, color: INK, background: 'none', border: 'none', cursor: 'pointer' }}>← Back home</button>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ maxWidth: '520px', margin: '0 auto' }}>
+
+        {/* NAV */}
+        <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${INK}15`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
+          <button onClick={() => router.push('/')} style={{ fontSize: '12px', fontWeight: 700, color: `${INK}55`, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.04em' }}>← back</button>
+          <div style={{ background: INK, borderRadius: '6px', padding: '6px 12px', display: 'flex', flexDirection: 'column' as const, justifyContent: 'center' }}>
+            <span style={{ fontSize: '9px', color: 'rgba(240,237,230,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase' as const, fontWeight: 500, display: 'block', marginBottom: '2px' }}>A Hospitality Confessional</span>
+            <span style={{ fontSize: '16px', fontWeight: 900, color: BG, letterSpacing: '-0.3px', lineHeight: 1 }}>SHIFT STORIES</span>
+          </div>
+          <div style={{ width: '60px' }} />
+        </div>
+
+        {/* STORY */}
+        <div style={{ padding: '24px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <span style={{ fontSize: '12px', fontStyle: 'italic', color: `${INK}55` }}>{story.descriptor}</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '3px 10px', borderRadius: '2px', border: `1.5px solid ${INK}20`, color: `${INK}66`, whiteSpace: 'nowrap' as const, marginLeft: '12px' }}>{story.category}</span>
+          </div>
+
+          <p style={{ fontSize: '16px', lineHeight: 1.65, color: INK, marginBottom: '28px' }}>{story.tale}</p>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px', borderTop: `1.5px solid ${INK}15` }}>
+            <span style={{ fontSize: '11px', color: `${INK}33`, letterSpacing: '0.04em' }}>{story.venue} · {timeAgo(story.created_at)}</span>
+            <button onClick={handleShare} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', padding: '6px 14px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: 'transparent', color: `${INK}66`, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {shared ? 'Copied!' : 'Share'}
+            </button>
+          </div>
+        </div>
+
+        {/* BACK */}
+        <div style={{ padding: '8px 20px 32px', textAlign: 'center' as const }}>
+          <button onClick={() => router.push('/')} style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', color: `${INK}44`, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textTransform: 'uppercase' as const }}>← Read more confessions</button>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{ textAlign: 'center' as const, padding: '20px', borderTop: `1.5px solid ${INK}15` }}>
+          <p style={{ fontSize: '11px', color: `${INK}33` }}>questions? <a href="mailto:shiftstoriesfyi@gmail.com" style={{ color: `${INK}55` }}>shiftstoriesfyi@gmail.com</a></p>
+        </div>
+
+      </div>
+    </div>
+  )
+}
