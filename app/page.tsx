@@ -14,12 +14,12 @@ type Story = {
 }
 
 const categoryColours: Record<string, string> = {
-  'Unhinged': 'bg-pink-100 text-pink-800',
-  'Food crime': 'bg-amber-100 text-amber-800',
-  'Wholesome': 'bg-green-100 text-green-800',
-  'Legend': 'bg-purple-100 text-purple-800',
-  'Language barrier': 'bg-blue-100 text-blue-800',
-  'Twat': 'bg-orange-100 text-orange-800',
+  'Unhinged':         'bg-pink-100 text-pink-700',
+  'Food crime':       'bg-amber-100 text-amber-700',
+  'Wholesome':        'bg-green-100 text-green-700',
+  'Legend':           'bg-purple-100 text-purple-700',
+  'Language barrier': 'bg-blue-100 text-blue-700',
+  'Twat':             'bg-red-100 text-red-600',
 }
 
 export default function Home() {
@@ -75,67 +75,100 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen font-sans" style={{ background: '#f5f5f0' }}>
       <div className="max-w-lg mx-auto">
 
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-          <span className="text-lg font-medium tracking-tight">shift<span className="text-orange-500">stories</span></span>
-          <button onClick={() => setShowForm(true)} className="bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-full">
+        <div className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between" style={{ background: '#1a1a2e' }}>
+          <span className="text-xl font-black tracking-tight text-white" style={{ letterSpacing: '-0.5px' }}>
+            shift<span style={{ color: '#FF6B6B' }}>stories</span>
+          </span>
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-sm font-bold px-5 py-2 transition-transform active:scale-95"
+            style={{ background: '#FF6B6B', color: '#1a1a2e', borderRadius: '999px' }}
+          >
             + Share a tale
           </button>
         </div>
 
-        <div className="bg-white border-b border-gray-100 px-4 py-6 text-center">
-          <p className="font-medium text-gray-800">Customer reviews.</p>
-          <p className="text-sm text-gray-400 mt-1">Written by the staff, not the other way round.</p>
+        <div className="px-4 py-8 text-center" style={{ background: '#1a1a2e', borderBottom: '3px solid #FF6B6B' }}>
+          <p className="font-black text-2xl text-white" style={{ letterSpacing: '-0.5px' }}>
+            Customer <span style={{ color: '#FF6B6B' }}>reviews.</span>
+          </p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Written by the staff, not the other way round.
+          </p>
         </div>
 
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-gray-100 bg-white">
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide" style={{ background: '#f5f5f0' }}>
           {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)}
-              className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition-colors ${category === c ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-white text-gray-500 border-gray-200'}`}>
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              className="text-xs font-semibold whitespace-nowrap transition-all active:scale-95"
+              style={{
+                padding: '7px 14px',
+                borderRadius: '999px',
+                border: category === c ? 'none' : '1.5px solid #1a1a2e22',
+                background: category === c ? '#1a1a2e' : '#fff',
+                color: category === c ? '#fff' : '#1a1a2e99',
+              }}
+            >
               {c}
             </button>
           ))}
         </div>
 
-        <div className="flex gap-3 px-4 py-2 border-b border-gray-100 bg-white">
-          <button onClick={() => setSort('new')}
-            className={`text-xs font-medium pb-1 border-b-2 transition-colors ${sort === 'new' ? 'border-orange-500 text-orange-500' : 'border-transparent text-gray-400'}`}>
-            New
-          </button>
-          <button onClick={() => setSort('top')}
-            className={`text-xs font-medium pb-1 border-b-2 transition-colors ${sort === 'top' ? 'border-orange-500 text-orange-500' : 'border-transparent text-gray-400'}`}>
-            Top
-          </button>
+        <div className="flex gap-4 px-4 pb-0 pt-1" style={{ borderBottom: '1.5px solid #1a1a2e11', background: '#f5f5f0' }}>
+          {(['new', 'top'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setSort(tab)}
+              className="text-xs font-bold pb-2 capitalize transition-colors"
+              style={{
+                borderBottom: sort === tab ? '2.5px solid #FF6B6B' : '2.5px solid transparent',
+                color: sort === tab ? '#FF6B6B' : '#1a1a2e55',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         <div className="px-4 py-4 flex flex-col gap-3">
-          {loading && <p className="text-center text-gray-400 text-sm py-8">Loading stories...</p>}
+          {loading && <p className="text-center text-sm py-8" style={{ color: '#1a1a2e44' }}>Loading stories...</p>}
           {!loading && stories.length === 0 && (
-            <p className="text-center text-gray-400 text-sm py-8">No stories yet — be the first!</p>
+            <p className="text-center text-sm py-8" style={{ color: '#1a1a2e44' }}>No stories yet — be the first!</p>
           )}
           {stories.map(story => (
-            <div key={story.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div
+              key={story.id}
+              className="bg-white p-4"
+              style={{ borderRadius: '20px', border: '1.5px solid #1a1a2e08', boxShadow: '0 1px 3px rgba(26,26,46,0.05)' }}
+            >
               <a href={`/stories/${story.id}`} className="block">
-                <div className="flex items-start justify-between mb-1">
-                  <span className="text-xs text-gray-400 italic flex-1 pr-2">{story.descriptor}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-xs italic flex-1 pr-2" style={{ color: '#1a1a2e55' }}>{story.descriptor}</span>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
                     {story.category}
                   </span>
                 </div>
-                <p className="text-sm text-gray-800 leading-relaxed mb-2">{story.tale}</p>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#1a1a2e' }}>{story.tale}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
-                  <button onClick={async (e) => {
-                    e.preventDefault()
-                    const url = `${window.location.origin}/stories/${story.id}`
-                    if (navigator.share) {
-                      await navigator.share({ title: 'ShiftStories', url })
-                    } else {
-                      navigator.clipboard.writeText(url)
-                    }
-                  }} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-400 transition-colors">
+                  <span className="text-xs" style={{ color: '#1a1a2e33' }}>{story.venue} · {timeAgo(story.created_at)}</span>
+                  <button
+                    onClick={async (e) => {
+                      e.preventDefault()
+                      const url = `${window.location.origin}/stories/${story.id}`
+                      if (navigator.share) {
+                        await navigator.share({ title: 'ShiftStories', url })
+                      } else {
+                        navigator.clipboard.writeText(url)
+                      }
+                    }}
+                    className="text-xs font-semibold px-3 py-1.5 transition-all active:scale-95"
+                    style={{ borderRadius: '999px', border: '1.5px solid #FF6B6B44', color: '#FF6B6B', background: '#FF6B6B0d' }}
+                  >
                     share
                   </button>
                 </div>
@@ -145,45 +178,52 @@ export default function Home() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 bg-black/50 z-20 flex items-end">
-            <div className="bg-white w-full rounded-t-3xl p-6 flex flex-col gap-4">
+          <div className="fixed inset-0 z-20 flex items-end" style={{ background: 'rgba(26,26,46,0.6)' }}>
+            <div className="w-full p-6 flex flex-col gap-4" style={{ background: '#fff', borderRadius: '28px 28px 0 0' }}>
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-medium">Share a tale</h2>
-                <button onClick={() => setShowForm(false)} className="text-gray-400 text-sm">cancel</button>
+                <h2 className="font-black text-base" style={{ color: '#1a1a2e', letterSpacing: '-0.3px' }}>Share a tale</h2>
+                <button onClick={() => setShowForm(false)} className="text-sm" style={{ color: '#1a1a2e55' }}>cancel</button>
               </div>
               {submitted ? (
-                <p className="text-center text-green-600 text-sm py-4">Tale submitted — the industry thanks you.</p>
+                <p className="text-center text-sm py-4" style={{ color: '#06D6A0', fontWeight: 600 }}>
+                  Tale submitted — the industry thanks you. 🙌
+                </p>
               ) : (
                 <>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-400">Describe them (no names)</label>
+                    <label className="text-xs font-semibold" style={{ color: '#1a1a2e66' }}>Describe them (no names)</label>
                     <input value={form.descriptor} onChange={e => setForm({...form, descriptor: e.target.value})}
                       placeholder="e.g. man, 50s, sensible fleece"
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300"/>
+                      className="text-sm focus:outline-none"
+                      style={{ border: '1.5px solid #1a1a2e15', borderRadius: '14px', padding: '10px 14px', color: '#1a1a2e', background: '#f5f5f0' }}/>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-400">Category</label>
+                    <label className="text-xs font-semibold" style={{ color: '#1a1a2e66' }}>Category</label>
                     <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300">
+                      className="text-sm focus:outline-none"
+                      style={{ border: '1.5px solid #1a1a2e15', borderRadius: '14px', padding: '10px 14px', color: '#1a1a2e', background: '#f5f5f0' }}>
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-400">The tale</label>
+                    <label className="text-xs font-semibold" style={{ color: '#1a1a2e66' }}>The tale</label>
                     <textarea value={form.tale} onChange={e => setForm({...form, tale: e.target.value})}
                       placeholder="What happened..."
                       rows={4}
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300 resize-none"/>
+                      className="text-sm focus:outline-none resize-none"
+                      style={{ border: '1.5px solid #1a1a2e15', borderRadius: '14px', padding: '10px 14px', color: '#1a1a2e', background: '#f5f5f0' }}/>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-400">Your venue (city is fine)</label>
+                    <label className="text-xs font-semibold" style={{ color: '#1a1a2e66' }}>Your venue (city is fine)</label>
                     <input value={form.venue} onChange={e => setForm({...form, venue: e.target.value})}
                       placeholder="e.g. Cafe, Bristol"
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-300"/>
+                      className="text-sm focus:outline-none"
+                      style={{ border: '1.5px solid #1a1a2e15', borderRadius: '14px', padding: '10px 14px', color: '#1a1a2e', background: '#f5f5f0' }}/>
                   </div>
                   <button onClick={handleSubmit} disabled={submitting}
-                    className="bg-orange-500 text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50">
-                    {submitting ? 'Posting...' : 'Post your tale'}
+                    className="font-black text-sm py-3 transition-all active:scale-95 disabled:opacity-50"
+                    style={{ background: '#FF6B6B', color: '#1a1a2e', borderRadius: '14px' }}>
+                    {submitting ? 'Posting...' : 'Post your tale 🍽️'}
                   </button>
                 </>
               )}
@@ -191,8 +231,10 @@ export default function Home() {
           </div>
         )}
 
-        <div className="text-center py-6 border-t border-gray-100">
-          <p className="text-xs text-gray-300">questions or feedback? <a href="mailto:shiftstoriesfyi@gmail.com" className="text-orange-400">shiftstoriesfyi@gmail.com</a></p>
+        <div className="text-center py-6" style={{ borderTop: '1px solid #1a1a2e0d' }}>
+          <p className="text-xs" style={{ color: '#1a1a2e33' }}>
+            questions or feedback? <a href="mailto:shiftstoriesfyi@gmail.com" style={{ color: '#FF6B6B' }}>shiftstoriesfyi@gmail.com</a>
+          </p>
         </div>
 
       </div>
