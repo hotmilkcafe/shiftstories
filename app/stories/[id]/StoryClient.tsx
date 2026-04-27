@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { supabase } from '../../supabase'
+
+
 
 
 type Story = {
@@ -16,6 +17,8 @@ type Story = {
 }
 
 
+
+
 const categoryColours: Record<string, string> = {
   'Unhinged':         'bg-pink-100 text-pink-700',
   'Food crime':       'bg-amber-100 text-amber-700',
@@ -26,6 +29,8 @@ const categoryColours: Record<string, string> = {
 }
 
 
+
+
 export default function StoryClient({ id }: { id: string }) {
   const router = useRouter()
   const [story, setStory] = useState<Story | null>(null)
@@ -33,9 +38,6 @@ export default function StoryClient({ id }: { id: string }) {
   const [shared, setShared] = useState(false)
 
 
+
+
   useEffect(() => {
-    async function fetchStory() {
-      const { data } = await supabase.from('stories').select('*').eq('id', id).single()
-      setStory(data)
-      setLoading(false)
-    }
