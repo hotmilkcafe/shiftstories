@@ -39,7 +39,6 @@ export default function Home() {
 
   useEffect(() => {
     fetchStories()
-    // Load which stories this device has already samed
     const stored = localStorage.getItem('samed_stories')
     if (stored) setSamed(JSON.parse(stored))
   }, [])
@@ -49,25 +48,38 @@ export default function Home() {
     const { data } = await supabase.from('stories').select('*').order('created_at', { ascending: false })
     const stories = data || []
     setAllStories(stories)
-    // Build initial counts map
     const counts: Record<number, number> = {}
     stories.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
     setSameCounts(counts)
     setLoading(false)
   }
 
-  async function handleSame(e: React.MouseEvent, storyId: number) {
+  async function handleSame(e: React.MouseEvent, story: Story) {
     e.preventDefault()
-    if (samed[storyId]) return // already voted
+    if (samed[story.id]) return
 
-    // Optimistically update UI
-    setSameCounts(prev => ({ ...prev, [storyId]: (prev[storyId] || 0) + 1 }))
-    const newSamed = { ...samed, [storyId]: true }
+    const newCount = (sameCounts[story.id] || 0) + 1
+
+    // Optimistically update UI immediately
+    setSameCounts(prev => ({ ...prev, [story.id]: newCount }))
+    const newSamed = { ...samed, [story.id]: true }
     setSamed(newSamed)
     localStorage.setItem('samed_stories', JSON.stringify(newSamed))
 
-    // Update Supabase
-    await supabase.rpc('increment_ha_count', { story_id: storyId })
+    // Direct update to Supabase
+    const { error } = await supabase
+      .from('stories')
+      .update({ ha_count: newCount })
+      .eq('id', story.id)
+
+    if (error) {
+      // Rollback on failure
+      setSameCounts(prev => ({ ...prev, [story.id]: newCount - 1 }))
+      const rolledBack = { ...newSamed }
+      delete rolledBack[story.id]
+      setSamed(rolledBack)
+      localStorage.setItem('samed_stories', JSON.stringify(rolledBack))
+    }
   }
 
   function getSorted(stories: Story[]) {
@@ -181,7 +193,7 @@ export default function Home() {
                 <p className="text-sm leading-relaxed mb-3" style={{ color: '#1a1a2e' }}>{story.tale}</p>
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={(e) => handleSame(e, story.id)}
+                    onClick={(e) => handleSame(e, story)}
                     className="text-xs font-bold px-3 py-1.5 transition-all active:scale-95 flex items-center gap-1.5"
                     style={{
                       borderRadius: '999px',
