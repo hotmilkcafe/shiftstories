@@ -19,9 +19,8 @@ async function getStory(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const story = await getStory(id)
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const story = await getStory(params.id)
   if (!story) return { title: 'ShiftStories' }
   const snippet = story.tale.length > 120 ? story.tale.substring(0, 120) + '...' : story.tale
   const title = `${story.descriptor} (${story.category}) | ShiftStories`
@@ -31,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     openGraph: {
       title,
       description: snippet,
-      url: `https://www.shiftstories.fyi/stories/${id}`,
+      url: `https://www.shiftstories.fyi/stories/${params.id}`,
       siteName: 'ShiftStories',
       images: [{ url: 'https://www.shiftstories.fyi/og-default.png', width: 1200, height: 630 }],
       type: 'article',
@@ -45,7 +44,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  return <StoryClient id={id} />
+export default function StoryPage() {
+  return <StoryClient />
 }
