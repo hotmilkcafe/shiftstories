@@ -45,11 +45,14 @@ export default function StoryClient({ id }: { id: string }) {
   }
 
   async function handleShare() {
+    if (!story) return
     const url = window.location.href
+    const snippet = story.tale.length > 140 ? story.tale.substring(0, 140) + '...' : story.tale
+    const text = `"${snippet}" — ShiftStories`
     if (navigator.share) {
-      await navigator.share({ title: 'ShiftStories', url })
+      await navigator.share({ title: 'ShiftStories', text, url })
     } else {
-      navigator.clipboard.writeText(url)
+      navigator.clipboard.writeText(`${text}\n${url}`)
       setShared(true)
       setTimeout(() => setShared(false), 2000)
     }
@@ -108,7 +111,7 @@ export default function StoryClient({ id }: { id: string }) {
                 className="text-xs font-semibold px-4 py-2 transition-all active:scale-95"
                 style={{ borderRadius: '999px', border: '1.5px solid #FF6B6B44', color: '#FF6B6B', background: '#FF6B6B0d' }}
               >
-                {shared ? 'link copied!' : 'share'}
+                {shared ? 'copied!' : 'share'}
               </button>
             </div>
           </div>
