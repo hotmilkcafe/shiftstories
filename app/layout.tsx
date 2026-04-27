@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ShiftStories",
   description: "Customer reviews. Written by the staff, not the other way round.",
+  icons: {
+    icon: "/shift_logo.png",
+    apple: "/shift_logo.png",
+  },
   openGraph: {
     title: "ShiftStories",
     description: "Customer reviews. Written by the staff, not the other way round.",
