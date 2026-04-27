@@ -10,6 +10,7 @@ type Story = {
   category: string
   tale: string
   venue: string
+  ha_count: number
   created_at: string
 }
 
@@ -28,6 +29,8 @@ export default function Home() {
   const [sort, setSort] = useState<'new' | 'top'>('new')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sameCounts, setSameCounts] = useState<Record<number, number>>({})
+  const [samed, setSamed] = useState<Record<number, boolean>>({})
   const [form, setForm] = useState({
     descriptor: '', category: 'Unhinged', tale: '', venue: ''
   })
@@ -36,17 +39,39 @@ export default function Home() {
 
   useEffect(() => {
     fetchStories()
+    // Load which stories this device has already samed
+    const stored = localStorage.getItem('samed_stories')
+    if (stored) setSamed(JSON.parse(stored))
   }, [])
 
   async function fetchStories() {
     setLoading(true)
     const { data } = await supabase.from('stories').select('*').order('created_at', { ascending: false })
-    setAllStories(data || [])
+    const stories = data || []
+    setAllStories(stories)
+    // Build initial counts map
+    const counts: Record<number, number> = {}
+    stories.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
+    setSameCounts(counts)
     setLoading(false)
   }
 
+  async function handleSame(e: React.MouseEvent, storyId: number) {
+    e.preventDefault()
+    if (samed[storyId]) return // already voted
+
+    // Optimistically update UI
+    setSameCounts(prev => ({ ...prev, [storyId]: (prev[storyId] || 0) + 1 }))
+    const newSamed = { ...samed, [storyId]: true }
+    setSamed(newSamed)
+    localStorage.setItem('samed_stories', JSON.stringify(newSamed))
+
+    // Update Supabase
+    await supabase.rpc('increment_ha_count', { story_id: storyId })
+  }
+
   function getSorted(stories: Story[]) {
-    if (sort === 'top') return [...stories].sort((a, b) => (b as any).ha_count - (a as any).ha_count)
+    if (sort === 'top') return [...stories].sort((a, b) => (sameCounts[b.id] || 0) - (sameCounts[a.id] || 0))
     return stories
   }
 
@@ -155,22 +180,36 @@ export default function Home() {
                 </div>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: '#1a1a2e' }}>{story.tale}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: '#1a1a2e33' }}>{story.venue} · {timeAgo(story.created_at)}</span>
                   <button
-                    onClick={async (e) => {
-                      e.preventDefault()
-                      const url = `${window.location.origin}/stories/${story.id}`
-                      if (navigator.share) {
-                        await navigator.share({ title: 'ShiftStories', url })
-                      } else {
-                        navigator.clipboard.writeText(url)
-                      }
+                    onClick={(e) => handleSame(e, story.id)}
+                    className="text-xs font-bold px-3 py-1.5 transition-all active:scale-95 flex items-center gap-1.5"
+                    style={{
+                      borderRadius: '999px',
+                      border: samed[story.id] ? 'none' : '1.5px solid #1a1a2e15',
+                      background: samed[story.id] ? '#1a1a2e' : '#fff',
+                      color: samed[story.id] ? '#fff' : '#1a1a2e55',
                     }}
-                    className="text-xs font-semibold px-3 py-1.5 transition-all active:scale-95"
-                    style={{ borderRadius: '999px', border: '1.5px solid #FF6B6B44', color: '#FF6B6B', background: '#FF6B6B0d' }}
                   >
-                    share
+                    👊 same{sameCounts[story.id] > 0 ? ` · ${sameCounts[story.id]}` : ''}
                   </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: '#1a1a2e33' }}>{story.venue} · {timeAgo(story.created_at)}</span>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault()
+                        const url = `${window.location.origin}/stories/${story.id}`
+                        if (navigator.share) {
+                          await navigator.share({ title: 'ShiftStories', url })
+                        } else {
+                          navigator.clipboard.writeText(url)
+                        }
+                      }}
+                      className="text-xs font-semibold px-3 py-1.5 transition-all active:scale-95"
+                      style={{ borderRadius: '999px', border: '1.5px solid #FF6B6B44', color: '#FF6B6B', background: '#FF6B6B0d' }}
+                    >
+                      share
+                    </button>
+                  </div>
                 </div>
               </a>
             </div>
