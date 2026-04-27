@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Twat']
-
 const BG = '#f0ede6'
 const INK = '#1a1a1a'
 
@@ -93,78 +92,42 @@ export default function Home() {
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
-  const inputStyle = {
-    border: `1.5px solid ${INK}20`,
-    borderRadius: '4px',
-    padding: '10px 14px',
-    fontSize: '14px',
-    color: INK,
-    background: BG,
-    width: '100%',
-    outline: 'none',
-    fontFamily: 'inherit',
-  }
+  const inp = { border: `1.5px solid ${INK}20`, borderRadius: '4px', padding: '10px 14px', fontSize: '14px', color: INK, background: BG, width: '100%', outline: 'none', fontFamily: 'inherit' }
+
+  const Logo = () => (
+    <div style={{ background: INK, borderRadius: '8px', padding: '8px 14px', display: 'inline-flex', flexDirection: 'column' as const, justifyContent: 'center' }}>
+      <span style={{ fontSize: '10px', color: 'rgba(240,237,230,0.5)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, fontWeight: 500, display: 'block', marginBottom: '3px' }}>A Hospitality Confessional</span>
+      <span style={{ fontSize: '24px', fontWeight: 900, color: BG, letterSpacing: '-0.5px', lineHeight: 1 }}>SHIFT STORIES</span>
+    </div>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: '520px', margin: '0 auto' }}>
 
-        {/* NAV */}
-        <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${INK}15`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
-          <div style={{ background: INK, borderRadius: '6px', padding: '6px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <span style={{ fontSize: '9px', color: 'rgba(240,237,230,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase' as const, fontWeight: 500, display: 'block', marginBottom: '2px' }}>A Hospitality Confessional</span>
-            <span style={{ fontSize: '16px', fontWeight: 900, color: BG, letterSpacing: '-0.3px', lineHeight: 1 }}>SHIFT STORIES</span>
-          </div>
+        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${INK}15`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
+          <Logo />
           <button onClick={() => setShowForm(true)} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>
             + Share a tale
           </button>
         </div>
 
-        {/* HERO */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: `1.5px solid ${INK}15` }}>
-          <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: `${INK}55`, marginBottom: '6px' }}>Anonymous confessions</p>
-          <p style={{ fontSize: '22px', fontWeight: 900, color: INK, lineHeight: 1.15, letterSpacing: '-0.5px' }}>From hospitality workers.</p>
+        <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${INK}15` }}>
+          <p style={{ fontSize: '20px', fontWeight: 900, color: INK, lineHeight: 1.2, letterSpacing: '-0.4px' }}>What happened on your last shift?</p>
         </div>
 
-        {/* FILTERS */}
-        <div style={{ padding: '12px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' as const, borderBottom: `1.5px solid ${INK}15`, background: BG }}>
+        <div style={{ padding: '12px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' as const, borderBottom: `1.5px solid ${INK}15` }}>
           {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)} style={{
-              padding: '5px 12px',
-              borderRadius: '3px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: `1.5px solid ${category === c ? INK : INK + '25'}`,
-              background: category === c ? INK : 'transparent',
-              color: category === c ? BG : `${INK}66`,
-              cursor: 'pointer',
-              letterSpacing: '0.03em',
-              fontFamily: 'inherit',
-            }}>{c}</button>
+            <button key={c} onClick={() => setCategory(c)} style={{ padding: '5px 12px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, border: `1.5px solid ${category === c ? INK : INK + '25'}`, background: category === c ? INK : 'transparent', color: category === c ? BG : `${INK}66`, cursor: 'pointer', letterSpacing: '0.03em', fontFamily: 'inherit' }}>{c}</button>
           ))}
         </div>
 
-        {/* SORT */}
-        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', borderBottom: `1.5px solid ${INK}15`, background: BG }}>
+        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', borderBottom: `1.5px solid ${INK}15` }}>
           {(['new', 'top'] as const).map(tab => (
-            <button key={tab} onClick={() => setSort(tab)} style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase' as const,
-              color: sort === tab ? INK : `${INK}33`,
-              paddingBottom: '8px',
-              borderBottom: sort === tab ? `2px solid ${INK}` : '2px solid transparent',
-              border: 'none',
-              borderRadius: 0,
-              background: 'transparent',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}>{tab}</button>
+            <button key={tab} onClick={() => setSort(tab)} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: sort === tab ? INK : `${INK}33`, paddingBottom: '8px', borderBottom: sort === tab ? `2px solid ${INK}` : '2px solid transparent', border: 'none', borderRadius: 0, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>{tab}</button>
           ))}
         </div>
 
-        {/* FEED */}
         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1px', background: `${INK}15` }}>
           {loading && <div style={{ background: BG, padding: '40px 20px', textAlign: 'center' as const, fontSize: '13px', color: `${INK}44` }}>Loading...</div>}
           {!loading && stories.length === 0 && <div style={{ background: BG, padding: '40px 20px', textAlign: 'center' as const, fontSize: '13px', color: `${INK}44` }}>No stories yet — be the first.</div>}
@@ -179,14 +142,7 @@ export default function Home() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '10px', color: `${INK}33`, letterSpacing: '0.04em' }}>{story.venue} · {timeAgo(story.created_at)}</span>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button onClick={(e) => handleSame(e, story)} style={{
-                      fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em',
-                      padding: '4px 10px', borderRadius: '3px',
-                      border: `1.5px solid ${INK}25`,
-                      background: samed[story.id] ? INK : 'transparent',
-                      color: samed[story.id] ? BG : `${INK}55`,
-                      cursor: 'pointer', fontFamily: 'inherit',
-                    }}>
+                    <button onClick={(e) => handleSame(e, story)} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: samed[story.id] ? INK : 'transparent', color: samed[story.id] ? BG : `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>
                       👊 same{sameCounts[story.id] > 0 ? ` ${sameCounts[story.id]}` : ''}
                     </button>
                     <button onClick={async (e) => {
@@ -194,13 +150,7 @@ export default function Home() {
                       const url = `${window.location.origin}/stories/${story.id}`
                       if (navigator.share) await navigator.share({ title: 'Shift Stories', url })
                       else navigator.clipboard.writeText(url)
-                    }} style={{
-                      fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em',
-                      padding: '4px 10px', borderRadius: '3px',
-                      border: `1.5px solid ${INK}25`,
-                      background: 'transparent', color: `${INK}55`,
-                      cursor: 'pointer', fontFamily: 'inherit',
-                    }}>Share</button>
+                    }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: 'transparent', color: `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
                   </div>
                 </div>
               </a>
@@ -208,7 +158,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* FORM */}
         {showForm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.6)', zIndex: 20, display: 'flex', alignItems: 'flex-end' }}>
             <div style={{ background: BG, width: '100%', borderRadius: '12px 12px 0 0', padding: '24px 20px', display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
@@ -220,23 +169,21 @@ export default function Home() {
                 <p style={{ textAlign: 'center' as const, fontSize: '14px', color: INK, padding: '16px 0', fontWeight: 600 }}>Confession received. The industry thanks you.</p>
               ) : (
                 <>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: `${INK}55` }}>Describe them (no names)</label>
-                    <input value={form.descriptor} onChange={e => setForm({...form, descriptor: e.target.value})} placeholder="e.g. man, 50s, sensible fleece" style={inputStyle} />
-                  </div>
+                  {[{ label: 'Describe them (no names)', field: 'descriptor', placeholder: 'e.g. man, 50s, sensible fleece' }, { label: 'Your venue (city is fine)', field: 'venue', placeholder: 'e.g. Cafe, Bristol' }].map(({ label, field, placeholder }) => (
+                    <div key={field} style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: `${INK}55` }}>{label}</label>
+                      <input value={(form as any)[field]} onChange={e => setForm({ ...form, [field]: e.target.value })} placeholder={placeholder} style={inp} />
+                    </div>
+                  ))}
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
                     <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: `${INK}55` }}>Category</label>
-                    <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} style={inputStyle}>
+                    <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inp}>
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
                     </select>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
                     <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: `${INK}55` }}>The confession</label>
-                    <textarea value={form.tale} onChange={e => setForm({...form, tale: e.target.value})} placeholder="What happened..." rows={4} style={{ ...inputStyle, resize: 'none' as const }} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: `${INK}55` }}>Your venue (city is fine)</label>
-                    <input value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} placeholder="e.g. Cafe, Bristol" style={inputStyle} />
+                    <textarea value={form.tale} onChange={e => setForm({ ...form, tale: e.target.value })} placeholder="What happened..." rows={4} style={{ ...inp, resize: 'none' as const }} />
                   </div>
                   <button onClick={handleSubmit} disabled={submitting} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '14px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: submitting ? 0.5 : 1 }}>
                     {submitting ? 'Posting...' : 'Submit confession'}
@@ -247,7 +194,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* FOOTER */}
         <div style={{ textAlign: 'center' as const, padding: '20px', borderTop: `1.5px solid ${INK}15` }}>
           <p style={{ fontSize: '11px', color: `${INK}33` }}>questions? <a href="mailto:shiftstoriesfyi@gmail.com" style={{ color: `${INK}55` }}>shiftstoriesfyi@gmail.com</a></p>
         </div>
