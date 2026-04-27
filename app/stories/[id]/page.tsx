@@ -15,12 +15,12 @@ type Story = {
 }
 
 const categoryColours: Record<string, string> = {
-  'Unhinged': 'bg-pink-100 text-pink-800',
-  'Food crime': 'bg-amber-100 text-amber-800',
-  'Wholesome': 'bg-green-100 text-green-800',
-  'Legend': 'bg-purple-100 text-purple-800',
-  'Language barrier': 'bg-blue-100 text-blue-800',
-  'Chaos gremlin': 'bg-orange-100 text-orange-800',
+  'Unhinged':         'bg-pink-100 text-pink-700',
+  'Food crime':       'bg-amber-100 text-amber-700',
+  'Wholesome':        'bg-green-100 text-green-700',
+  'Legend':           'bg-purple-100 text-purple-700',
+  'Language barrier': 'bg-blue-100 text-blue-700',
+  'Twat':             'bg-red-100 text-red-600',
 }
 
 export default function StoryPage() {
@@ -39,16 +39,6 @@ export default function StoryPage() {
     fetchStory()
   }, [id])
 
-  async function handleShare() {
-    if (navigator.share) {
-      await navigator.share({ title: `ShiftStories — ${story?.descriptor}`, url: window.location.href })
-    } else {
-      navigator.clipboard.writeText(window.location.href)
-      setShared(true)
-      setTimeout(() => setShared(false), 2000)
-    }
-  }
-
   function timeAgo(date: string) {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000)
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
@@ -56,66 +46,108 @@ export default function StoryPage() {
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <p className="text-gray-400 text-sm">Loading...</p>
-    </div>
-  )
+  async function handleShare() {
+    const url = window.location.href
+    if (navigator.share) {
+      await navigator.share({ title: 'ShiftStories', url })
+    } else {
+      navigator.clipboard.writeText(url)
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
+    }
+  }
 
-  if (!story) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <p className="text-gray-400 text-sm">Story not found</p>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f5f5f0' }}>
+        <p className="text-sm" style={{ color: '#1a1a2e44' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!story) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: '#f5f5f0' }}>
+        <p className="text-sm" style={{ color: '#1a1a2e44' }}>Story not found.</p>
+        <button onClick={() => router.push('/')} className="text-sm font-bold" style={{ color: '#FF6B6B' }}>← Back home</button>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen font-sans" style={{ background: '#f5f5f0' }}>
       <div className="max-w-lg mx-auto">
 
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-          <button onClick={() => router.push('/')} className="text-gray-400 text-sm">← back</button>
-          <span className="text-lg font-medium tracking-tight">shift<span className="text-orange-500">stories</span></span>
-          <div className="w-12"/>
+        {/* NAV */}
+        <div className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between" style={{ background: '#1a1a2e' }}>
+          <button onClick={() => router.push('/')} className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            ← back
+          </button>
+          <span className="text-lg font-black tracking-tight text-white" style={{ letterSpacing: '-0.5px' }}>
+            shift<span style={{ color: '#FF6B6B' }}>stories</span>
+          </span>
+          <div style={{ width: 48 }} />
         </div>
 
-        <div className="px-4 py-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex gap-4">
+        {/* HERO BAR */}
+        <div style={{ background: '#1a1a2e', borderBottom: '3px solid #FF6B6B', height: 4 }} />
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-xs text-gray-400 italic flex-1 pr-2">{story.descriptor}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
-                  {story.category}
-                </span>
-              </div>
-              <div className="flex gap-0.5 mb-3">
-                {[1,2,3,4,5].map(i => (
-                  <svg key={i} className="w-4 h-4" viewBox="0 0 14 14" fill={i <= story.stars ? '#f97316' : 'none'} stroke="#f97316" strokeWidth="1.5">
-                    <polygon points="7,1 8.8,5.2 13.4,5.6 10,8.6 11,13 7,10.5 3,13 4,8.6 0.6,5.6 5.2,5.2"/>
-                  </svg>
-                ))}
-                <span className="text-xs text-gray-300 ml-1">staff experience</span>
-              </div>
-              <p className="text-base text-gray-800 leading-relaxed mb-4">{story.tale}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-300">{story.venue} · {timeAgo(story.created_at)}</span>
-                <button onClick={handleShare}
-                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-400 transition-colors">
-                  {shared ? 'copied!' : 'share'}
-                </button>
-              </div>
+        {/* STORY CARD */}
+        <div className="px-4 py-6">
+          <div className="bg-white p-6" style={{ borderRadius: '24px', border: '1.5px solid #1a1a2e08', boxShadow: '0 1px 3px rgba(26,26,46,0.05)' }}>
+
+            <div className="flex items-start justify-between mb-4">
+              <span className="text-sm italic" style={{ color: '#1a1a2e55' }}>{story.descriptor}</span>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full shrink-0 ml-2 ${categoryColours[story.category] || 'bg-gray-100 text-gray-600'}`}>
+                {story.category}
+              </span>
             </div>
 
-          </div>
+            <p className="text-base leading-relaxed mb-6" style={{ color: '#1a1a2e', fontWeight: 400 }}>
+              {story.tale}
+            </p>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-400 mb-3">More tales from the industry</p>
-            <button onClick={() => router.push('/')}
-              className="bg-orange-500 text-white text-sm font-medium px-6 py-2.5 rounded-full">
-              Read more stories
-            </button>
+            <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid #1a1a2e08' }}>
+              <span className="text-xs" style={{ color: '#1a1a2e33' }}>
+                {story.venue} · {timeAgo(story.created_at)}
+              </span>
+              <button
+                onClick={handleShare}
+                className="text-xs font-semibold px-4 py-2 transition-all active:scale-95"
+                style={{
+                  borderRadius: '999px',
+                  border: '1.5px solid #FF6B6B44',
+                  color: '#FF6B6B',
+                  background: '#FF6B6B0d',
+                }}
+              >
+                {shared ? 'link copied!' : 'share'}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* BACK LINK */}
+        <div className="px-4 pb-8 text-center">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm font-bold transition-all active:scale-95"
+            style={{ color: '#1a1a2e55' }}
+          >
+            ← Read more tales
+          </button>
+        </div>
+
+        {/* FOOTER */}
+        <div className="text-center py-6" style={{ borderTop: '1px solid #1a1a2e0d' }}>
+          <p className="text-xs" style={{ color: '#1a1a2e33' }}>
+            questions or feedback?{' '}
+            <a href="mailto:shiftstoriesfyi@gmail.com" style={{ color: '#FF6B6B' }}>
+              shiftstoriesfyi@gmail.com
+            </a>
+          </p>
+        </div>
+
       </div>
     </div>
   )
