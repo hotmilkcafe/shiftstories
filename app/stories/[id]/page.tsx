@@ -19,24 +19,19 @@ async function getStory(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const story = await getStory(params.id)
-
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const story = await getStory(id)
   if (!story) return { title: 'ShiftStories' }
-
-  const snippet = story.tale.length > 120
-    ? story.tale.substring(0, 120) + '...'
-    : story.tale
-
+  const snippet = story.tale.length > 120 ? story.tale.substring(0, 120) + '...' : story.tale
   const title = `${story.descriptor} (${story.category}) | ShiftStories`
-
   return {
     title,
     description: snippet,
     openGraph: {
       title,
       description: snippet,
-      url: `https://www.shiftstories.fyi/stories/${params.id}`,
+      url: `https://www.shiftstories.fyi/stories/${id}`,
       siteName: 'ShiftStories',
       images: [{ url: 'https://www.shiftstories.fyi/og-default.png', width: 1200, height: 630 }],
       type: 'article',
@@ -50,6 +45,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 }
 
-export default function StoryPage({ params }: { params: { id: string } }) {
-  return <StoryClient id={params.id} />
+export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  return <StoryClient id={id} />
 }
