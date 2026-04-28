@@ -57,12 +57,8 @@ function drawCard(story: Story): string {
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
-
-  // Background
   ctx.fillStyle = BG
   ctx.fillRect(0, 0, W, H)
-
-  // ── LOGO ──────────────────────────────────────────
   const logoX = pad
   const logoY = 100
   const logoW = W - pad * 2
@@ -70,37 +66,28 @@ function drawCard(story: Story): string {
   roundRect(ctx, logoX, logoY, logoW, logoH, 16)
   ctx.fillStyle = BLUE
   ctx.fill()
-
   ctx.font = '500 28px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(255,255,255,0.45)'
   ctx.letterSpacing = '5px'
   ctx.textAlign = 'left'
   ctx.fillText('A MEDICAL CONFESSIONAL', logoX + 36, logoY + 54)
   ctx.letterSpacing = '0px'
-
   ctx.font = '900 60px system-ui, sans-serif'
   ctx.fillStyle = '#ffffff'
   ctx.fillText('THIS IS GONNA HURT', logoX + 36, logoY + 130)
-
-  // ── REVIEW CARD ────────────────────────────────────
   const cardX = pad
   const cardY = logoY + logoH + 60
   const cardW = W - pad * 2
   const cardH = H - cardY - 260
-
   ctx.fillStyle = '#f0f8ff'
   roundRect(ctx, cardX, cardY, cardW, cardH, 12)
   ctx.fill()
-
   ctx.strokeStyle = `rgba(0,94,184,0.12)`
   ctx.lineWidth = 2
   roundRect(ctx, cardX, cardY, cardW, cardH, 12)
   ctx.stroke()
-
   const cPad = 56
   let y = cardY + cPad
-
-  // Source label
   ctx.font = '500 24px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(0,61,112,0.3)'
   ctx.letterSpacing = '3px'
@@ -108,22 +95,15 @@ function drawCard(story: Story): string {
   ctx.fillText('SHIFTSTORIES.FYI/DOCTORS  ·  PATIENT REVIEW', cardX + cPad, y)
   ctx.letterSpacing = '0px'
   y += 44
-
-  // Divider
   ctx.fillStyle = 'rgba(0,94,184,0.1)'
   ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
   y += 40
-
-  // Reviewer name + verified badge
   ctx.font = 'bold 38px system-ui, sans-serif'
   ctx.fillStyle = INK
   ctx.textAlign = 'left'
   let displayName = story.descriptor.toUpperCase()
-  while (ctx.measureText(displayName).width > cardW - cPad * 2 - 220 && displayName.length > 0) {
-    displayName = displayName.slice(0, -1)
-  }
+  while (ctx.measureText(displayName).width > cardW - cPad * 2 - 220 && displayName.length > 0) { displayName = displayName.slice(0, -1) }
   ctx.fillText(displayName, cardX + cPad, y)
-
   ctx.font = 'bold 22px system-ui, sans-serif'
   ctx.fillStyle = INK
   const badgeText = 'Verified Review'
@@ -135,8 +115,6 @@ function drawCard(story: Story): string {
   ctx.strokeRect(badgeX, badgeY, badgeW, 40)
   ctx.fillText(badgeText, badgeX + 14, y - 6)
   y += 52
-
-  // Stars
   const stars = STAR_RATINGS[story.category] ?? 3
   const starS = 44
   const starG = 10
@@ -162,18 +140,15 @@ function drawCard(story: Story): string {
     if (filled) ctx.fill(); else ctx.stroke()
   }
   y += starS + 44
-
   ctx.fillStyle = 'rgba(0,94,184,0.08)'
   ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
   y += 36
-
   ctx.font = 'bold 28px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(0,61,112,0.45)'
   ctx.letterSpacing = '3px'
   ctx.fillText(story.category.toUpperCase() + '  ·', cardX + cPad, y)
   ctx.letterSpacing = '0px'
   y += 48
-
   ctx.font = 'italic 40px Georgia, serif'
   ctx.fillStyle = INK
   const taleLines = wrapText(ctx, `"${story.tale}"`, cardW - cPad * 2)
@@ -182,7 +157,6 @@ function drawCard(story: Story): string {
   const displayLines = taleLines.slice(0, maxLines)
   if (taleLines.length > maxLines) displayLines[maxLines - 1] = displayLines[maxLines - 1].replace(/"$/, '') + '\u2026"'
   for (const l of displayLines) { ctx.fillText(l, cardX + cPad, y); y += lineH }
-
   const cardFootY = cardY + cardH - 60
   ctx.fillStyle = 'rgba(0,94,184,0.08)'
   ctx.fillRect(cardX + cPad, cardFootY, cardW - cPad * 2, 1.5)
@@ -190,8 +164,6 @@ function drawCard(story: Story): string {
   ctx.fillStyle = 'rgba(0,61,112,0.35)'
   ctx.textAlign = 'left'
   ctx.fillText(story.venue, cardX + cPad, cardFootY + 40)
-
-  // ── FOOTER ─────────────────────────────────────────
   const footY = cardY + cardH + 50
   ctx.textAlign = 'center'
   ctx.font = 'bold 32px system-ui, sans-serif'
@@ -202,7 +174,6 @@ function drawCard(story: Story): string {
   ctx.font = '500 30px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(0,61,112,0.35)'
   ctx.fillText('shiftstories.fyi/doctors', W / 2, footY + 78)
-
   return canvas.toDataURL('image/png')
 }
 
@@ -355,7 +326,6 @@ export default function DoctorsPage() {
         <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${BLUE}20`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
           <Logo />
           <button onClick={() => setShowForm(true)} style={{ background: BLUE, color: '#fff', border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>+ Share a case</button>
-          <a href="/" style={{ fontSize: '11px', fontWeight: 700, color: '#7ec8e3', letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>← Hospitality</a>
         </div>
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${BLUE}20` }}>
@@ -368,10 +338,11 @@ export default function DoctorsPage() {
           ))}
         </div>
 
-        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', borderBottom: `1.5px solid ${BLUE}20` }}>
+        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: `1.5px solid ${BLUE}20` }}>
           {(['new', 'top'] as const).map(tab => (
             <button key={tab} onClick={() => setSort(tab)} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: sort === tab ? INK : `${BLUE}55`, paddingBottom: '8px', borderBottom: sort === tab ? `2px solid ${INK}` : '2px solid transparent', border: 'none', borderRadius: 0, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>{tab}</button>
           ))}
+          <a href="/" style={{ fontSize: '11px', fontWeight: 700, color: '#7ec8e3', letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const, marginLeft: 'auto', paddingBottom: '8px' }}>← Hospitality</a>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1px', background: `${BLUE}20` }}>
@@ -466,4 +437,4 @@ export default function DoctorsPage() {
       </div>
     </div>
   )
-}
+                  }
