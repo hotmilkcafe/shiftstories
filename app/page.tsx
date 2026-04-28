@@ -41,12 +41,8 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   let line = ''
   for (const word of words) {
     const test = line ? line + ' ' + word : word
-    if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line)
-      line = word
-    } else {
-      line = test
-    }
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word }
+    else line = test
   }
   if (line) lines.push(line)
   return lines
@@ -60,56 +56,37 @@ function drawCard(story: Story): string {
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
-
-  // Background
   ctx.fillStyle = BG
   ctx.fillRect(0, 0, W, H)
-
-  // ── LOGO SECTION (top) ──────────────────────────────
   const logoX = pad
   const logoY = 100
   const logoW = W - pad * 2
   const logoH = 160
-
-  // Dark rounded rectangle
   roundRect(ctx, logoX, logoY, logoW, logoH, 16)
   ctx.fillStyle = INK
   ctx.fill()
-
-  // "A Hospitality Confessional" label
   ctx.font = '500 28px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(240,237,230,0.45)'
   ctx.letterSpacing = '5px'
   ctx.textAlign = 'left'
   ctx.fillText('A HOSPITALITY CONFESSIONAL', logoX + 36, logoY + 54)
   ctx.letterSpacing = '0px'
-
-  // "SHIFT STORIES" bold
   ctx.font = '900 72px system-ui, sans-serif'
   ctx.fillStyle = BG
   ctx.fillText('SHIFT STORIES', logoX + 36, logoY + 130)
-
-  // ── REVIEW CARD (middle) ────────────────────────────
   const cardX = pad
   const cardY = logoY + logoH + 60
   const cardW = W - pad * 2
-  const cardH = H - cardY - 260  // leave room for footer
-
-  // Card background (slightly whiter)
+  const cardH = H - cardY - 260
   ctx.fillStyle = '#f8f6f1'
   roundRect(ctx, cardX, cardY, cardW, cardH, 12)
   ctx.fill()
-
-  // Card border
   ctx.strokeStyle = 'rgba(26,26,26,0.08)'
   ctx.lineWidth = 2
   roundRect(ctx, cardX, cardY, cardW, cardH, 12)
   ctx.stroke()
-
   const cPad = 56
   let y = cardY + cPad
-
-  // Source label
   ctx.font = '500 24px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(26,26,26,0.3)'
   ctx.letterSpacing = '3px'
@@ -117,25 +94,15 @@ function drawCard(story: Story): string {
   ctx.fillText('SHIFTSTORIES.FYI  ·  CUSTOMER REVIEW', cardX + cPad, y)
   ctx.letterSpacing = '0px'
   y += 44
-
-  // Divider
   ctx.fillStyle = 'rgba(26,26,26,0.08)'
   ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
   y += 40
-
-  // Reviewer name + verified badge
   ctx.font = 'bold 38px system-ui, sans-serif'
   ctx.fillStyle = INK
   ctx.textAlign = 'left'
-  const nameText = story.descriptor.toUpperCase()
-  // Truncate name if too long
-  let displayName = nameText
-  while (ctx.measureText(displayName).width > cardW - cPad * 2 - 220 && displayName.length > 0) {
-    displayName = displayName.slice(0, -1)
-  }
+  let displayName = story.descriptor.toUpperCase()
+  while (ctx.measureText(displayName).width > cardW - cPad * 2 - 220 && displayName.length > 0) { displayName = displayName.slice(0, -1) }
   ctx.fillText(displayName, cardX + cPad, y)
-
-  // Verified badge
   ctx.font = 'bold 22px system-ui, sans-serif'
   ctx.fillStyle = INK
   const badgeText = 'Verified Review'
@@ -147,8 +114,6 @@ function drawCard(story: Story): string {
   ctx.strokeRect(badgeX, badgeY, badgeW, 40)
   ctx.fillText(badgeText, badgeX + 14, y - 6)
   y += 52
-
-  // Stars
   const stars = STAR_RATINGS[story.category] ?? 3
   const starS = 44
   const starG = 10
@@ -174,36 +139,23 @@ function drawCard(story: Story): string {
     if (filled) ctx.fill(); else ctx.stroke()
   }
   y += starS + 44
-
-  // Divider
   ctx.fillStyle = 'rgba(26,26,26,0.07)'
   ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
   y += 36
-
-  // Category
   ctx.font = 'bold 28px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(26,26,26,0.45)'
   ctx.letterSpacing = '3px'
   ctx.fillText(story.category.toUpperCase() + '  ·', cardX + cPad, y)
   ctx.letterSpacing = '0px'
   y += 48
-
-  // The tale — wrapped italic
   ctx.font = 'italic 40px Georgia, serif'
   ctx.fillStyle = INK
   const taleLines = wrapText(ctx, `"${story.tale}"`, cardW - cPad * 2)
   const lineH = 62
   const maxLines = Math.floor((cardY + cardH - y - cPad - 80) / lineH)
   const displayLines = taleLines.slice(0, maxLines)
-  if (taleLines.length > maxLines) {
-    displayLines[maxLines - 1] = displayLines[maxLines - 1].replace(/"$/, '') + '\u2026"'
-  }
-  for (const l of displayLines) {
-    ctx.fillText(l, cardX + cPad, y)
-    y += lineH
-  }
-
-  // Card footer
+  if (taleLines.length > maxLines) displayLines[maxLines - 1] = displayLines[maxLines - 1].replace(/"$/, '') + '\u2026"'
+  for (const l of displayLines) { ctx.fillText(l, cardX + cPad, y); y += lineH }
   const cardFootY = cardY + cardH - 60
   ctx.fillStyle = 'rgba(26,26,26,0.07)'
   ctx.fillRect(cardX + cPad, cardFootY, cardW - cPad * 2, 1.5)
@@ -211,23 +163,16 @@ function drawCard(story: Story): string {
   ctx.fillStyle = 'rgba(26,26,26,0.35)'
   ctx.textAlign = 'left'
   ctx.fillText(story.venue, cardX + cPad, cardFootY + 40)
-
-  // ── FOOTER SECTION (bottom) ─────────────────────────
   const footY = cardY + cardH + 50
-  const footCentreX = W / 2
-
-  // CTA text
   ctx.textAlign = 'center'
   ctx.font = 'bold 32px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(26,26,26,0.5)'
   ctx.letterSpacing = '1px'
-  ctx.fillText('Share your own shift', footCentreX, footY + 36)
+  ctx.fillText('Share your own shift', W / 2, footY + 36)
   ctx.letterSpacing = '0px'
-
   ctx.font = '500 30px system-ui, sans-serif'
   ctx.fillStyle = 'rgba(26,26,26,0.35)'
-  ctx.fillText('shiftstories.fyi', footCentreX, footY + 78)
-
+  ctx.fillText('shiftstories.fyi', W / 2, footY + 78)
   return canvas.toDataURL('image/png')
 }
 
@@ -247,13 +192,11 @@ function StoryCardPreview({ story }: { story: Story }) {
   const stars = STAR_RATINGS[story.category] ?? 3
   return (
     <div style={{ width: '270px', height: '480px', background: BG, display: 'flex', flexDirection: 'column', padding: '18px 20px', boxSizing: 'border-box', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
-      {/* Mini logo */}
       <div style={{ background: INK, borderRadius: '5px', padding: '5px 10px', marginBottom: '12px', display: 'flex', flexDirection: 'column' as const }}>
         <span style={{ fontSize: '7px', color: 'rgba(240,237,230,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontFamily: 'system-ui', marginBottom: '2px' }}>A Hospitality Confessional</span>
         <span style={{ fontSize: '16px', fontWeight: 900, color: BG, letterSpacing: '-0.3px', fontFamily: 'system-ui', lineHeight: 1 }}>SHIFT STORIES</span>
       </div>
-      {/* Card */}
-      <div style={{ background: '#f8f6f1', border: '1px solid rgba(26,26,26,0.08)', borderRadius: '6px', padding: '12px', flex: 1, display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' }}>
+      <div style={{ background: '#f8f6f1', border: `1px solid rgba(26,26,26,0.08)`, borderRadius: '6px', padding: '12px', flex: 1, display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' }}>
         <div style={{ fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,26,0.3)', marginBottom: '8px', fontFamily: 'system-ui' }}>shiftstories.fyi · Customer Review</div>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
           <span style={{ fontSize: '9px', fontWeight: 700, color: INK, fontFamily: 'system-ui', textTransform: 'uppercase' as const, flex: 1, paddingRight: '6px', lineHeight: 1.2 }}>{story.descriptor.toUpperCase()}</span>
@@ -265,7 +208,6 @@ function StoryCardPreview({ story }: { story: Story }) {
         <div style={{ fontSize: '10px', lineHeight: 1.6, color: INK, fontStyle: 'italic', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical' as const }}>"{story.tale}"</div>
         <div style={{ borderTop: '1px solid rgba(26,26,26,0.07)', paddingTop: '6px', marginTop: '6px', fontSize: '8px', color: 'rgba(26,26,26,0.35)', fontFamily: 'system-ui' }}>{story.venue}</div>
       </div>
-      {/* Mini footer */}
       <div style={{ textAlign: 'center' as const, paddingTop: '10px' }}>
         <div style={{ fontSize: '8px', fontWeight: 700, color: 'rgba(26,26,26,0.45)', fontFamily: 'system-ui' }}>Share your own shift</div>
         <div style={{ fontSize: '8px', color: 'rgba(26,26,26,0.3)', fontFamily: 'system-ui' }}>shiftstories.fyi</div>
@@ -383,7 +325,6 @@ export default function Home() {
         <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${INK}15`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
           <Logo />
           <button onClick={() => setShowForm(true)} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>+ Share a tale</button>
-          <a href="/doctors" style={{ fontSize: '11px', fontWeight: 700, color: `${INK}44`, letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>Doctors →</a>
         </div>
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${INK}15` }}>
@@ -396,10 +337,11 @@ export default function Home() {
           ))}
         </div>
 
-        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', borderBottom: `1.5px solid ${INK}15` }}>
+        <div style={{ padding: '8px 20px 0', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: `1.5px solid ${INK}15` }}>
           {(['new', 'top'] as const).map(tab => (
             <button key={tab} onClick={() => setSort(tab)} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: sort === tab ? INK : `${INK}33`, paddingBottom: '8px', borderBottom: sort === tab ? `2px solid ${INK}` : '2px solid transparent', border: 'none', borderRadius: 0, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>{tab}</button>
           ))}
+          <a href="/doctors" style={{ fontSize: '11px', fontWeight: 700, color: `${INK}44`, letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const, marginLeft: 'auto', paddingBottom: '8px' }}>Doctors →</a>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1px', background: `${INK}15` }}>
@@ -494,4 +436,4 @@ export default function Home() {
       </div>
     </div>
   )
-}
+      }
