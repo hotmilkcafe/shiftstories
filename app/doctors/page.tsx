@@ -232,9 +232,11 @@ export default function DoctorsPage() {
   const [form, setForm] = useState({ descriptor: '', category: 'Hypochondriac', tale: '', venue: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [count, setCount] = useState<number | null>(null)
 
   useEffect(() => {
     fetchStories(0)
+    supabase.from('doctor_stories').select('*', { count: 'exact', head: true }).then(({ count: c }) => setCount(c))
     const stored = localStorage.getItem('samed_doctor_stories')
     if (stored) setSamed(JSON.parse(stored))
   }, [])
@@ -330,6 +332,7 @@ export default function DoctorsPage() {
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${BLUE}20` }}>
           <p style={{ fontSize: '20px', fontWeight: 900, color: INK, lineHeight: 1.2, letterSpacing: '-0.4px' }}>What happened in your last shift?</p>
+          {count !== null && <p style={{ fontSize: '11px', color: `${BLUE}88`, marginTop: '6px', letterSpacing: '0.04em' }}>{count.toLocaleString()} cases filed</p>}
         </div>
 
         <div style={{ padding: '12px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' as const, borderBottom: `1.5px solid ${BLUE}20` }}>
