@@ -110,6 +110,7 @@ export default function Home() {
           <button onClick={() => setShowForm(true)} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>
             + Share a tale
           </button>
+          <a href="/doctors" style={{ fontSize: '11px', fontWeight: 700, color: `${INK}44`, letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>Doctors →</a>
         </div>
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${INK}15` }}>
