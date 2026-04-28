@@ -111,6 +111,7 @@ export default function DoctorsPage() {
           <button onClick={() => setShowForm(true)} style={{ background: BLUE, color: '#fff', border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>
             + Share a case
           </button>
+          <a href="/" style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>← Hospitality</a>
         </div>
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `1.5px solid ${BLUE}20` }}>
