@@ -6,6 +6,11 @@ const CATEGORIES = ['All', 'Hypochondriac', 'Non-compliant', 'Frequent flyer', '
 const BG = '#e8f4fb'
 const INK = '#003d70'
 const BLUE = '#005eb8'
+const PAGE_SIZE = 20
+
+const STAR_RATINGS: Record<string, number> = {
+  'Non-compliant': 1, 'Hypochondriac': 1, 'Frequent flyer': 2, 'Googled it': 2, 'Refused meds': 1, 'Legend': 5, 'Unhinged': 1,
+}
 
 type Story = {
   id: number
@@ -17,34 +22,271 @@ type Story = {
   created_at: string
 }
 
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + w - r, y)
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+  ctx.lineTo(x + w, y + h - r)
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  ctx.lineTo(x + r, y + h)
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+  ctx.lineTo(x, y + r)
+  ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word }
+    else line = test
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+function drawCard(story: Story): string {
+  const W = 1080
+  const H = 1920
+  const pad = 72
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+
+  // Background
+  ctx.fillStyle = BG
+  ctx.fillRect(0, 0, W, H)
+
+  // ── LOGO ──────────────────────────────────────────
+  const logoX = pad
+  const logoY = 100
+  const logoW = W - pad * 2
+  const logoH = 160
+  roundRect(ctx, logoX, logoY, logoW, logoH, 16)
+  ctx.fillStyle = BLUE
+  ctx.fill()
+
+  ctx.font = '500 28px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(255,255,255,0.45)'
+  ctx.letterSpacing = '5px'
+  ctx.textAlign = 'left'
+  ctx.fillText('A MEDICAL CONFESSIONAL', logoX + 36, logoY + 54)
+  ctx.letterSpacing = '0px'
+
+  ctx.font = '900 60px system-ui, sans-serif'
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('THIS IS GONNA HURT', logoX + 36, logoY + 130)
+
+  // ── REVIEW CARD ────────────────────────────────────
+  const cardX = pad
+  const cardY = logoY + logoH + 60
+  const cardW = W - pad * 2
+  const cardH = H - cardY - 260
+
+  ctx.fillStyle = '#f0f8ff'
+  roundRect(ctx, cardX, cardY, cardW, cardH, 12)
+  ctx.fill()
+
+  ctx.strokeStyle = `rgba(0,94,184,0.12)`
+  ctx.lineWidth = 2
+  roundRect(ctx, cardX, cardY, cardW, cardH, 12)
+  ctx.stroke()
+
+  const cPad = 56
+  let y = cardY + cPad
+
+  // Source label
+  ctx.font = '500 24px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(0,61,112,0.3)'
+  ctx.letterSpacing = '3px'
+  ctx.textAlign = 'left'
+  ctx.fillText('SHIFTSTORIES.FYI/DOCTORS  ·  PATIENT REVIEW', cardX + cPad, y)
+  ctx.letterSpacing = '0px'
+  y += 44
+
+  // Divider
+  ctx.fillStyle = 'rgba(0,94,184,0.1)'
+  ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
+  y += 40
+
+  // Reviewer name + verified badge
+  ctx.font = 'bold 38px system-ui, sans-serif'
+  ctx.fillStyle = INK
+  ctx.textAlign = 'left'
+  let displayName = story.descriptor.toUpperCase()
+  while (ctx.measureText(displayName).width > cardW - cPad * 2 - 220 && displayName.length > 0) {
+    displayName = displayName.slice(0, -1)
+  }
+  ctx.fillText(displayName, cardX + cPad, y)
+
+  ctx.font = 'bold 22px system-ui, sans-serif'
+  ctx.fillStyle = INK
+  const badgeText = 'Verified Review'
+  const badgeW = ctx.measureText(badgeText).width + 28
+  const badgeX = cardX + cardW - cPad - badgeW
+  const badgeY = y - 30
+  ctx.strokeStyle = INK
+  ctx.lineWidth = 2
+  ctx.strokeRect(badgeX, badgeY, badgeW, 40)
+  ctx.fillText(badgeText, badgeX + 14, y - 6)
+  y += 52
+
+  // Stars
+  const stars = STAR_RATINGS[story.category] ?? 3
+  const starS = 44
+  const starG = 10
+  for (let i = 0; i < 5; i++) {
+    const sx = cardX + cPad + i * (starS + starG) + starS / 2
+    const sy = y + starS / 2
+    const filled = i < stars
+    ctx.fillStyle = filled ? '#e8a020' : 'rgba(232,160,32,0.18)'
+    ctx.strokeStyle = filled ? '#e8a020' : 'rgba(232,160,32,0.5)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    for (let p = 0; p < 5; p++) {
+      const outerA = (p * 4 * Math.PI) / 5 - Math.PI / 2
+      const innerA = outerA + (2 * Math.PI) / 10
+      const ox = sx + (starS / 2) * Math.cos(outerA)
+      const oy = sy + (starS / 2) * Math.sin(outerA)
+      const ix = sx + (starS / 4) * Math.cos(innerA)
+      const iy = sy + (starS / 4) * Math.sin(innerA)
+      p === 0 ? ctx.moveTo(ox, oy) : ctx.lineTo(ox, oy)
+      ctx.lineTo(ix, iy)
+    }
+    ctx.closePath()
+    if (filled) ctx.fill(); else ctx.stroke()
+  }
+  y += starS + 44
+
+  ctx.fillStyle = 'rgba(0,94,184,0.08)'
+  ctx.fillRect(cardX + cPad, y, cardW - cPad * 2, 1.5)
+  y += 36
+
+  ctx.font = 'bold 28px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(0,61,112,0.45)'
+  ctx.letterSpacing = '3px'
+  ctx.fillText(story.category.toUpperCase() + '  ·', cardX + cPad, y)
+  ctx.letterSpacing = '0px'
+  y += 48
+
+  ctx.font = 'italic 40px Georgia, serif'
+  ctx.fillStyle = INK
+  const taleLines = wrapText(ctx, `"${story.tale}"`, cardW - cPad * 2)
+  const lineH = 62
+  const maxLines = Math.floor((cardY + cardH - y - cPad - 80) / lineH)
+  const displayLines = taleLines.slice(0, maxLines)
+  if (taleLines.length > maxLines) displayLines[maxLines - 1] = displayLines[maxLines - 1].replace(/"$/, '') + '\u2026"'
+  for (const l of displayLines) { ctx.fillText(l, cardX + cPad, y); y += lineH }
+
+  const cardFootY = cardY + cardH - 60
+  ctx.fillStyle = 'rgba(0,94,184,0.08)'
+  ctx.fillRect(cardX + cPad, cardFootY, cardW - cPad * 2, 1.5)
+  ctx.font = '26px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(0,61,112,0.35)'
+  ctx.textAlign = 'left'
+  ctx.fillText(story.venue, cardX + cPad, cardFootY + 40)
+
+  // ── FOOTER ─────────────────────────────────────────
+  const footY = cardY + cardH + 50
+  ctx.textAlign = 'center'
+  ctx.font = 'bold 32px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(0,61,112,0.5)'
+  ctx.letterSpacing = '1px'
+  ctx.fillText('Share your own case', W / 2, footY + 36)
+  ctx.letterSpacing = '0px'
+  ctx.font = '500 30px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(0,61,112,0.35)'
+  ctx.fillText('shiftstories.fyi/doctors', W / 2, footY + 78)
+
+  return canvas.toDataURL('image/png')
+}
+
+function StarRating({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', gap: '3px' }}>
+      {[1,2,3,4,5].map(i => (
+        <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= count ? '#e8a020' : 'none'} stroke="#e8a020" strokeWidth="1.5">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
+function StoryCardPreview({ story }: { story: Story }) {
+  const stars = STAR_RATINGS[story.category] ?? 3
+  return (
+    <div style={{ width: '270px', height: '480px', background: BG, display: 'flex', flexDirection: 'column', padding: '18px 20px', boxSizing: 'border-box', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ background: BLUE, borderRadius: '5px', padding: '5px 10px', marginBottom: '12px', display: 'flex', flexDirection: 'column' as const }}>
+        <span style={{ fontSize: '7px', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontFamily: 'system-ui', marginBottom: '2px' }}>A Medical Confessional</span>
+        <span style={{ fontSize: '13px', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px', fontFamily: 'system-ui', lineHeight: 1 }}>THIS IS GONNA HURT</span>
+      </div>
+      <div style={{ background: '#f0f8ff', border: `1px solid rgba(0,94,184,0.12)`, borderRadius: '6px', padding: '12px', flex: 1, display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' }}>
+        <div style={{ fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(0,61,112,0.3)', marginBottom: '8px', fontFamily: 'system-ui' }}>shiftstories.fyi/doctors · Patient Review</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+          <span style={{ fontSize: '9px', fontWeight: 700, color: INK, fontFamily: 'system-ui', textTransform: 'uppercase' as const, flex: 1, paddingRight: '6px', lineHeight: 1.2 }}>{story.descriptor.toUpperCase()}</span>
+          <span style={{ fontSize: '7px', fontWeight: 700, border: `1px solid ${INK}`, padding: '1px 4px', color: INK, whiteSpace: 'nowrap', fontFamily: 'system-ui' }}>Verified Review</span>
+        </div>
+        <StarRating count={stars} />
+        <div style={{ height: '1px', background: 'rgba(0,94,184,0.1)', margin: '8px 0' }} />
+        <div style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(0,61,112,0.45)', marginBottom: '6px', fontFamily: 'system-ui' }}>{story.category} ·</div>
+        <div style={{ fontSize: '10px', lineHeight: 1.6, color: INK, fontStyle: 'italic', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical' as const }}>"{story.tale}"</div>
+        <div style={{ borderTop: '1px solid rgba(0,94,184,0.08)', paddingTop: '6px', marginTop: '6px', fontSize: '8px', color: 'rgba(0,61,112,0.35)', fontFamily: 'system-ui' }}>{story.venue}</div>
+      </div>
+      <div style={{ textAlign: 'center' as const, paddingTop: '10px' }}>
+        <div style={{ fontSize: '8px', fontWeight: 700, color: 'rgba(0,61,112,0.45)', fontFamily: 'system-ui' }}>Share your own case</div>
+        <div style={{ fontSize: '8px', color: 'rgba(0,61,112,0.3)', fontFamily: 'system-ui' }}>shiftstories.fyi/doctors</div>
+      </div>
+    </div>
+  )
+}
+
 export default function DoctorsPage() {
   const [allStories, setAllStories] = useState<Story[]>([])
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState<'new' | 'top'>('new')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(0)
   const [sameCounts, setSameCounts] = useState<Record<number, number>>({})
   const [samed, setSamed] = useState<Record<number, boolean>>({})
+  const [cardStory, setCardStory] = useState<Story | null>(null)
   const [form, setForm] = useState({ descriptor: '', category: 'Hypochondriac', tale: '', venue: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    fetchStories()
+    fetchStories(0)
     const stored = localStorage.getItem('samed_doctor_stories')
     if (stored) setSamed(JSON.parse(stored))
   }, [])
 
-  async function fetchStories() {
-    setLoading(true)
-    const { data } = await supabase.from('doctor_stories').select('*').order('created_at', { ascending: false })
-    const stories = data || []
-    setAllStories(stories)
+  async function fetchStories(pageIndex: number) {
+    if (pageIndex === 0) setLoading(true)
+    else setLoadingMore(true)
+    const from = pageIndex * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+    const { data } = await supabase.from('doctor_stories').select('*').order('created_at', { ascending: false }).range(from, to)
+    const fetched = data || []
+    if (pageIndex === 0) setAllStories(fetched)
+    else setAllStories(prev => [...prev, ...fetched])
     const counts: Record<number, number> = {}
-    stories.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
-    setSameCounts(counts)
-    setLoading(false)
+    fetched.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
+    setSameCounts(prev => ({ ...prev, ...counts }))
+    setHasMore(fetched.length === PAGE_SIZE)
+    setPage(pageIndex)
+    if (pageIndex === 0) setLoading(false)
+    else setLoadingMore(false)
   }
+
+  async function loadMore() { await fetchStories(page + 1) }
 
   async function handleSame(e: React.MouseEvent, story: Story) {
     e.preventDefault()
@@ -64,6 +306,14 @@ export default function DoctorsPage() {
     }
   }
 
+  function handleDownloadCard(story: Story) {
+    const dataUrl = drawCard(story)
+    const link = document.createElement('a')
+    link.download = `thisgonnahurt-${story.id}.png`
+    link.href = dataUrl
+    link.click()
+  }
+
   function getSorted(stories: Story[]) {
     if (sort === 'top') return [...stories].sort((a, b) => (sameCounts[b.id] || 0) - (sameCounts[a.id] || 0))
     return stories
@@ -79,11 +329,7 @@ export default function DoctorsPage() {
     setSubmitting(false)
     setSubmitted(true)
     setForm({ descriptor: '', category: 'Hypochondriac', tale: '', venue: '' })
-    setTimeout(async () => {
-      setSubmitted(false)
-      setShowForm(false)
-      await fetchStories()
-    }, 2000)
+    setTimeout(async () => { setSubmitted(false); setShowForm(false); await fetchStories(0) }, 2000)
   }
 
   function timeAgo(date: string) {
@@ -108,9 +354,7 @@ export default function DoctorsPage() {
 
         <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${BLUE}20`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
           <Logo />
-          <button onClick={() => setShowForm(true)} style={{ background: BLUE, color: '#fff', border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>
-            + Share a case
-          </button>
+          <button onClick={() => setShowForm(true)} style={{ background: BLUE, color: '#fff', border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>+ Share a case</button>
           <a href="/" style={{ fontSize: '11px', fontWeight: 700, color: '#7ec8e3', letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>← Hospitality</a>
         </div>
 
@@ -147,18 +391,37 @@ export default function DoctorsPage() {
                     <button onClick={(e) => handleSame(e, story)} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${BLUE}30`, background: samed[story.id] ? BLUE : 'transparent', color: samed[story.id] ? '#fff' : BLUE, cursor: 'pointer', fontFamily: 'inherit' }}>
                       👊 same{sameCounts[story.id] > 0 ? ` ${sameCounts[story.id]}` : ''}
                     </button>
-                    <button onClick={async (e) => {
-                      e.preventDefault()
-                      const url = `${window.location.origin}/doctors/${story.id}`
-                      if (navigator.share) await navigator.share({ title: 'This Is Gonna Hurt', url })
-                      else navigator.clipboard.writeText(url)
-                    }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${BLUE}30`, background: 'transparent', color: BLUE, cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
+                    <button onClick={(e) => { e.preventDefault(); setCardStory(story) }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${BLUE}30`, background: 'transparent', color: BLUE, cursor: 'pointer', fontFamily: 'inherit' }}>📸</button>
+                    <button onClick={async (e) => { e.preventDefault(); const url = `${window.location.origin}/doctors/${story.id}`; if (navigator.share) await navigator.share({ title: 'This Is Gonna Hurt', url }); else navigator.clipboard.writeText(url) }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${BLUE}30`, background: 'transparent', color: BLUE, cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
                   </div>
                 </div>
               </a>
             </div>
           ))}
         </div>
+
+        {!loading && hasMore && (
+          <div style={{ padding: '20px', textAlign: 'center' as const, borderTop: `1.5px solid ${BLUE}20` }}>
+            <button onClick={loadMore} disabled={loadingMore} style={{ background: 'transparent', color: BLUE, border: `1.5px solid ${BLUE}40`, borderRadius: '4px', padding: '10px 28px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'inherit', opacity: loadingMore ? 0.5 : 1 }}>
+              {loadingMore ? 'Loading...' : 'Load more'}
+            </button>
+          </div>
+        )}
+
+        {cardStory && (
+          <div onClick={() => setCardStory(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,61,112,0.82)', zIndex: 30, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '20px', gap: '20px' }}>
+            <div onClick={e => e.stopPropagation()}>
+              <StoryCardPreview story={cardStory} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={(e) => { e.stopPropagation(); handleDownloadCard(cardStory) }} style={{ background: '#fff', color: BLUE, border: 'none', borderRadius: '4px', padding: '11px 24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                ⬇ Download for Instagram
+              </button>
+              <button onClick={() => setCardStory(null)} style={{ background: 'transparent', color: '#fff', border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: '4px', padding: '11px 24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', fontFamily: 'system-ui, sans-serif' }}>1080×1920px · ready for Stories</p>
+          </div>
+        )}
 
         {showForm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,61,112,0.5)', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
