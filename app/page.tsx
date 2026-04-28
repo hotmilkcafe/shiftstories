@@ -1,11 +1,15 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Twat']
 const BG = '#f0ede6'
 const INK = '#1a1a1a'
 const PAGE_SIZE = 20
+
+const STAR_RATINGS: Record<string, number> = {
+  'Twat': 1, 'Unhinged': 1, 'Food crime': 2, 'Language barrier': 2, 'Wholesome': 5, 'Legend': 5,
+}
 
 type Story = {
   id: number
@@ -15,6 +19,52 @@ type Story = {
   venue: string
   ha_count: number
   created_at: string
+}
+
+function StarRating({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', gap: '3px' }}>
+      {[1,2,3,4,5].map(i => (
+        <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= count ? '#e8a020' : 'none'} stroke="#e8a020" strokeWidth="1.5">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
+function StoryCard({ story }: { story: Story }) {
+  const stars = STAR_RATINGS[story.category] ?? 3
+  return (
+    <div id="story-card" style={{
+      width: '400px', height: '400px', background: BG, display: 'flex', flexDirection: 'column',
+      padding: '32px', boxSizing: 'border-box', flexShrink: 0,
+    }}>
+      <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(26,26,26,0.35)', marginBottom: '18px', fontFamily: 'system-ui, sans-serif' }}>
+        shiftstories.fyi · Customer Review
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK, fontFamily: 'system-ui, sans-serif', flex: 1, paddingRight: '10px', lineHeight: 1.3 }}>
+          {story.descriptor.toUpperCase()}
+        </div>
+        <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1.5px solid ${INK}`, padding: '3px 7px', color: INK, whiteSpace: 'nowrap', fontFamily: 'system-ui, sans-serif' }}>
+          Verified Review
+        </div>
+      </div>
+      <div style={{ marginBottom: '14px' }}><StarRating count={stars} /></div>
+      <div style={{ height: '1.5px', background: INK, marginBottom: '16px', opacity: 0.12 }} />
+      <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK, marginBottom: '12px', fontFamily: 'system-ui, sans-serif' }}>
+        {story.category} ·
+      </div>
+      <div style={{ fontSize: '13px', lineHeight: 1.65, color: INK, flex: 1, fontStyle: 'italic', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical' as const }}>
+        "{story.tale}"
+      </div>
+      <div style={{ marginTop: 'auto', paddingTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1.5px solid rgba(26,26,26,0.12)` }}>
+        <span style={{ fontSize: '10px', color: 'rgba(26,26,26,0.4)', fontFamily: 'system-ui, sans-serif', letterSpacing: '0.04em' }}>{story.venue}</span>
+        <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '-0.3px', color: INK, fontFamily: 'system-ui, sans-serif' }}>SHIFT<span style={{ opacity: 0.4 }}>STORIES</span></span>
+      </div>
+    </div>
+  )
 }
 
 export default function Home() {
@@ -28,9 +78,12 @@ export default function Home() {
   const [page, setPage] = useState(0)
   const [sameCounts, setSameCounts] = useState<Record<number, number>>({})
   const [samed, setSamed] = useState<Record<number, boolean>>({})
+  const [cardStory, setCardStory] = useState<Story | null>(null)
+  const [downloading, setDownloading] = useState(false)
   const [form, setForm] = useState({ descriptor: '', category: 'Unhinged', tale: '', venue: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchStories(0)
@@ -43,17 +96,10 @@ export default function Home() {
     else setLoadingMore(true)
     const from = pageIndex * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
-    const { data } = await supabase
-      .from('stories')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(from, to)
+    const { data } = await supabase.from('stories').select('*').order('created_at', { ascending: false }).range(from, to)
     const fetched = data || []
-    if (pageIndex === 0) {
-      setAllStories(fetched)
-    } else {
-      setAllStories(prev => [...prev, ...fetched])
-    }
+    if (pageIndex === 0) setAllStories(fetched)
+    else setAllStories(prev => [...prev, ...fetched])
     const counts: Record<number, number> = {}
     fetched.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
     setSameCounts(prev => ({ ...prev, ...counts }))
@@ -63,9 +109,7 @@ export default function Home() {
     else setLoadingMore(false)
   }
 
-  async function loadMore() {
-    await fetchStories(page + 1)
-  }
+  async function loadMore() { await fetchStories(page + 1) }
 
   async function handleSame(e: React.MouseEvent, story: Story) {
     e.preventDefault()
@@ -85,6 +129,20 @@ export default function Home() {
     }
   }
 
+  async function handleDownloadCard() {
+    if (!cardRef.current) return
+    setDownloading(true)
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(cardRef.current, { scale: 3, useCORS: true, backgroundColor: BG })
+      const link = document.createElement('a')
+      link.download = 'shiftstory-card.png'
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (e) { console.error(e) }
+    setDownloading(false)
+  }
+
   function getSorted(stories: Story[]) {
     if (sort === 'top') return [...stories].sort((a, b) => (sameCounts[b.id] || 0) - (sameCounts[a.id] || 0))
     return stories
@@ -100,11 +158,7 @@ export default function Home() {
     setSubmitting(false)
     setSubmitted(true)
     setForm({ descriptor: '', category: 'Unhinged', tale: '', venue: '' })
-    setTimeout(async () => {
-      setSubmitted(false)
-      setShowForm(false)
-      await fetchStories(0)
-    }, 2000)
+    setTimeout(async () => { setSubmitted(false); setShowForm(false); await fetchStories(0) }, 2000)
   }
 
   function timeAgo(date: string) {
@@ -114,17 +168,7 @@ export default function Home() {
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
-  const inp = {
-    border: `1.5px solid ${INK}20`,
-    borderRadius: '4px',
-    padding: '10px 14px',
-    fontSize: '14px',
-    color: INK,
-    background: BG,
-    width: '100%',
-    outline: 'none',
-    fontFamily: 'inherit'
-  }
+  const inp = { border: `1.5px solid ${INK}20`, borderRadius: '4px', padding: '10px 14px', fontSize: '14px', color: INK, background: BG, width: '100%', outline: 'none', fontFamily: 'inherit' }
 
   const Logo = () => (
     <div style={{ background: INK, borderRadius: '8px', padding: '8px 14px', display: 'inline-flex', flexDirection: 'column' as const, justifyContent: 'center' }}>
@@ -139,9 +183,7 @@ export default function Home() {
 
         <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1.5px solid ${INK}15`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
           <Logo />
-          <button onClick={() => setShowForm(true)} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>
-            + Share a tale
-          </button>
+          <button onClick={() => setShowForm(true)} style={{ background: INK, color: BG, border: 'none', borderRadius: '4px', padding: '9px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit' }}>+ Share a tale</button>
           <a href="/doctors" style={{ fontSize: '11px', fontWeight: 700, color: `${INK}44`, letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase' as const }}>Doctors →</a>
         </div>
 
@@ -178,12 +220,8 @@ export default function Home() {
                     <button onClick={(e) => handleSame(e, story)} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: samed[story.id] ? INK : 'transparent', color: samed[story.id] ? BG : `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>
                       👊 same{sameCounts[story.id] > 0 ? ` ${sameCounts[story.id]}` : ''}
                     </button>
-                    <button onClick={async (e) => {
-                      e.preventDefault()
-                      const url = `${window.location.origin}/stories/${story.id}`
-                      if (navigator.share) await navigator.share({ title: 'Shift Stories', url })
-                      else navigator.clipboard.writeText(url)
-                    }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: 'transparent', color: `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
+                    <button onClick={(e) => { e.preventDefault(); setCardStory(story) }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: 'transparent', color: `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>📸</button>
+                    <button onClick={async (e) => { e.preventDefault(); const url = `${window.location.origin}/stories/${story.id}`; if (navigator.share) await navigator.share({ title: 'Shift Stories', url }); else navigator.clipboard.writeText(url) }} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '3px', border: `1.5px solid ${INK}25`, background: 'transparent', color: `${INK}55`, cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
                   </div>
                 </div>
               </a>
@@ -193,13 +231,29 @@ export default function Home() {
 
         {!loading && hasMore && (
           <div style={{ padding: '20px', textAlign: 'center' as const, borderTop: `1.5px solid ${INK}15` }}>
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              style={{ background: 'transparent', color: INK, border: `1.5px solid ${INK}30`, borderRadius: '4px', padding: '10px 28px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'inherit', opacity: loadingMore ? 0.5 : 1 }}
-            >
+            <button onClick={loadMore} disabled={loadingMore} style={{ background: 'transparent', color: INK, border: `1.5px solid ${INK}30`, borderRadius: '4px', padding: '10px 28px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'inherit', opacity: loadingMore ? 0.5 : 1 }}>
               {loadingMore ? 'Loading...' : 'Load more'}
             </button>
+          </div>
+        )}
+
+        {/* Card modal */}
+        {cardStory && (
+          <div onClick={() => setCardStory(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.75)', zIndex: 30, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '20px', gap: '16px' }}>
+            <div onClick={e => e.stopPropagation()}>
+              <div ref={cardRef}>
+                <StoryCard story={cardStory} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleDownloadCard} disabled={downloading} style={{ background: BG, color: INK, border: 'none', borderRadius: '4px', padding: '10px 22px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: downloading ? 0.6 : 1 }}>
+                {downloading ? 'Saving...' : '⬇ Download card'}
+              </button>
+              <button onClick={() => setCardStory(null)} style={{ background: 'transparent', color: BG, border: `1.5px solid rgba(240,237,230,0.3)`, borderRadius: '4px', padding: '10px 22px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Close
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'rgba(240,237,230,0.4)', fontFamily: 'system-ui, sans-serif' }}>Tap outside to close</p>
           </div>
         )}
 
