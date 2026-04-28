@@ -159,8 +159,8 @@ export default function Home() {
         </div>
 
         {showForm && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.6)', zIndex: 20, display: 'flex', alignItems: 'flex-end' }}>
-            <div style={{ background: BG, width: '100%', borderRadius: '12px 12px 0 0', padding: '24px 20px', display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.6)', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ background: BG, width: '100%', maxWidth: '520px', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column' as const, gap: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.25)', maxHeight: '90vh', overflowY: 'auto' as const }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '16px', fontWeight: 900, color: INK, letterSpacing: '-0.3px' }}>Confess your shift</span>
                 <button onClick={() => setShowForm(false)} style={{ fontSize: '12px', color: `${INK}55`, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>
