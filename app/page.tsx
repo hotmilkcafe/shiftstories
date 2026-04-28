@@ -5,6 +5,7 @@ import { supabase } from './supabase'
 const CATEGORIES = ['All', 'Unhinged', 'Food crime', 'Wholesome', 'Legend', 'Language barrier', 'Twat']
 const BG = '#f0ede6'
 const INK = '#1a1a1a'
+const PAGE_SIZE = 20
 
 type Story = {
   id: number
@@ -22,6 +23,9 @@ export default function Home() {
   const [sort, setSort] = useState<'new' | 'top'>('new')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(0)
   const [sameCounts, setSameCounts] = useState<Record<number, number>>({})
   const [samed, setSamed] = useState<Record<number, boolean>>({})
   const [form, setForm] = useState({ descriptor: '', category: 'Unhinged', tale: '', venue: '' })
@@ -29,20 +33,38 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    fetchStories()
+    fetchStories(0)
     const stored = localStorage.getItem('samed_stories')
     if (stored) setSamed(JSON.parse(stored))
   }, [])
 
-  async function fetchStories() {
-    setLoading(true)
-    const { data } = await supabase.from('stories').select('*').order('created_at', { ascending: false })
-    const stories = data || []
-    setAllStories(stories)
+  async function fetchStories(pageIndex: number) {
+    if (pageIndex === 0) setLoading(true)
+    else setLoadingMore(true)
+    const from = pageIndex * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+    const { data } = await supabase
+      .from('stories')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, to)
+    const fetched = data || []
+    if (pageIndex === 0) {
+      setAllStories(fetched)
+    } else {
+      setAllStories(prev => [...prev, ...fetched])
+    }
     const counts: Record<number, number> = {}
-    stories.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
-    setSameCounts(counts)
-    setLoading(false)
+    fetched.forEach((s: Story) => { counts[s.id] = s.ha_count || 0 })
+    setSameCounts(prev => ({ ...prev, ...counts }))
+    setHasMore(fetched.length === PAGE_SIZE)
+    setPage(pageIndex)
+    if (pageIndex === 0) setLoading(false)
+    else setLoadingMore(false)
+  }
+
+  async function loadMore() {
+    await fetchStories(page + 1)
   }
 
   async function handleSame(e: React.MouseEvent, story: Story) {
@@ -81,7 +103,7 @@ export default function Home() {
     setTimeout(async () => {
       setSubmitted(false)
       setShowForm(false)
-      await fetchStories()
+      await fetchStories(0)
     }, 2000)
   }
 
@@ -92,7 +114,17 @@ export default function Home() {
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
-  const inp = { border: `1.5px solid ${INK}20`, borderRadius: '4px', padding: '10px 14px', fontSize: '14px', color: INK, background: BG, width: '100%', outline: 'none', fontFamily: 'inherit' }
+  const inp = {
+    border: `1.5px solid ${INK}20`,
+    borderRadius: '4px',
+    padding: '10px 14px',
+    fontSize: '14px',
+    color: INK,
+    background: BG,
+    width: '100%',
+    outline: 'none',
+    fontFamily: 'inherit'
+  }
 
   const Logo = () => (
     <div style={{ background: INK, borderRadius: '8px', padding: '8px 14px', display: 'inline-flex', flexDirection: 'column' as const, justifyContent: 'center' }}>
@@ -158,6 +190,18 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {!loading && hasMore && (
+          <div style={{ padding: '20px', textAlign: 'center' as const, borderTop: `1.5px solid ${INK}15` }}>
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              style={{ background: 'transparent', color: INK, border: `1.5px solid ${INK}30`, borderRadius: '4px', padding: '10px 28px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'inherit', opacity: loadingMore ? 0.5 : 1 }}
+            >
+              {loadingMore ? 'Loading...' : 'Load more'}
+            </button>
+          </div>
+        )}
 
         {showForm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.6)', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
