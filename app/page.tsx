@@ -21,6 +21,152 @@ type Story = {
   created_at: string
 }
 
+function drawCard(story: Story): string {
+  const size = 1200
+  const pad = 80
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+
+  // Background
+  ctx.fillStyle = BG
+  ctx.fillRect(0, 0, size, size)
+
+  // Subtle corner accents
+  ctx.strokeStyle = 'rgba(26,26,26,0.06)'
+  ctx.lineWidth = 1
+  const accentSize = 40
+  ;[[pad - 20, pad - 20], [size - pad + 20, pad - 20], [pad - 20, size - pad + 20], [size - pad + 20, size - pad + 20]].forEach(([x, y], i) => {
+    ctx.beginPath()
+    if (i === 0) { ctx.moveTo(x + accentSize, y); ctx.lineTo(x, y); ctx.lineTo(x, y + accentSize) }
+    if (i === 1) { ctx.moveTo(x - accentSize, y); ctx.lineTo(x, y); ctx.lineTo(x, y + accentSize) }
+    if (i === 2) { ctx.moveTo(x + accentSize, y); ctx.lineTo(x, y); ctx.lineTo(x, y - accentSize) }
+    if (i === 3) { ctx.moveTo(x - accentSize, y); ctx.lineTo(x, y); ctx.lineTo(x, y - accentSize) }
+    ctx.stroke()
+  })
+
+  let y = pad + 20
+
+  // Source label
+  ctx.font = '500 26px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(26,26,26,0.3)'
+  ctx.letterSpacing = '4px'
+  ctx.fillText('SHIFTSTORIES.FYI  ·  CUSTOMER REVIEW', pad, y)
+  ctx.letterSpacing = '0px'
+  y += 56
+
+  // Divider
+  ctx.fillStyle = 'rgba(26,26,26,0.1)'
+  ctx.fillRect(pad, y, size - pad * 2, 1.5)
+  y += 36
+
+  // Reviewer name + verified badge row
+  const nameText = story.descriptor.toUpperCase()
+  ctx.font = 'bold 32px system-ui, sans-serif'
+  ctx.fillStyle = INK
+  ctx.fillText(nameText, pad, y)
+
+  // Verified badge
+  const badgeText = 'Verified Review'
+  ctx.font = 'bold 22px system-ui, sans-serif'
+  const badgeW = ctx.measureText(badgeText).width + 28
+  const badgeX = size - pad - badgeW
+  const badgeY = y - 28
+  ctx.strokeStyle = INK
+  ctx.lineWidth = 2
+  ctx.strokeRect(badgeX, badgeY, badgeW, 38)
+  ctx.fillStyle = INK
+  ctx.fillText(badgeText, badgeX + 14, y - 4)
+  y += 52
+
+  // Stars
+  const stars = STAR_RATINGS[story.category] ?? 3
+  const starSize = 36
+  const starGap = 10
+  for (let i = 0; i < 5; i++) {
+    const sx = pad + i * (starSize + starGap)
+    const sy = y
+    const filled = i < stars
+    ctx.fillStyle = filled ? '#e8a020' : 'rgba(232,160,32,0.2)'
+    ctx.strokeStyle = '#e8a020'
+    ctx.lineWidth = 1.5
+    // Draw star path
+    ctx.beginPath()
+    for (let p = 0; p < 5; p++) {
+      const angle = (p * 4 * Math.PI) / 5 - Math.PI / 2
+      const r = p === 0 ? starSize / 2 : starSize / 2
+      const outerX = sx + starSize / 2 + (starSize / 2) * Math.cos(angle)
+      const outerY = sy + starSize / 2 + (starSize / 2) * Math.sin(angle)
+      const innerAngle = angle + (2 * Math.PI) / 10
+      const innerX = sx + starSize / 2 + (starSize / 4) * Math.cos(innerAngle)
+      const innerY = sy + starSize / 2 + (starSize / 4) * Math.sin(innerAngle)
+      if (p === 0) ctx.moveTo(outerX, outerY)
+      else ctx.lineTo(outerX, outerY)
+      ctx.lineTo(innerX, innerY)
+    }
+    ctx.closePath()
+    if (filled) ctx.fill()
+    else ctx.stroke()
+  }
+  y += starSize + 48
+
+  // Category label
+  ctx.font = 'bold 28px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(26,26,26,0.5)'
+  ctx.letterSpacing = '3px'
+  ctx.fillText(story.category.toUpperCase() + '  ·', pad, y)
+  ctx.letterSpacing = '0px'
+  y += 52
+
+  // The tale — wrapped italic text
+  ctx.font = 'italic 38px Georgia, serif'
+  ctx.fillStyle = INK
+  const maxWidth = size - pad * 2
+  const lineHeight = 58
+  const words = (`"${story.tale}"`).split(' ')
+  let line = ''
+  const taleLines: string[] = []
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word
+    if (ctx.measureText(test).width > maxWidth && line) {
+      taleLines.push(line)
+      line = word
+    } else {
+      line = test
+    }
+  }
+  if (line) taleLines.push(line)
+  const maxLines = 8
+  const displayLines = taleLines.slice(0, maxLines)
+  if (taleLines.length > maxLines) displayLines[maxLines - 1] = displayLines[maxLines - 1].replace(/"$/, '') + '…"'
+  for (const l of displayLines) {
+    ctx.fillText(l, pad, y)
+    y += lineHeight
+  }
+
+  // Bottom divider
+  const bottomY = size - pad - 60
+  ctx.fillStyle = 'rgba(26,26,26,0.1)'
+  ctx.fillRect(pad, bottomY, size - pad * 2, 1.5)
+
+  // Venue
+  ctx.font = '26px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(26,26,26,0.35)'
+  ctx.fillText(story.venue, pad, bottomY + 42)
+
+  // ShiftStories logo bottom right
+  ctx.font = 'bold 30px system-ui, sans-serif'
+  ctx.fillStyle = INK
+  const logoText = 'SHIFT'
+  const logoW = ctx.measureText('SHIFTSTORIES').width
+  ctx.fillText('SHIFT', size - pad - logoW, bottomY + 42)
+  ctx.fillStyle = 'rgba(26,26,26,0.35)'
+  ctx.fillText('STORIES', size - pad - ctx.measureText('STORIES').width, bottomY + 42)
+
+  return canvas.toDataURL('image/png')
+}
+
 function StarRating({ count }: { count: number }) {
   return (
     <div style={{ display: 'flex', gap: '3px' }}>
@@ -33,35 +179,22 @@ function StarRating({ count }: { count: number }) {
   )
 }
 
-function StoryCard({ story }: { story: Story }) {
+function StoryCardPreview({ story }: { story: Story }) {
   const stars = STAR_RATINGS[story.category] ?? 3
   return (
-    <div id="story-card" style={{
-      width: '400px', height: '400px', background: BG, display: 'flex', flexDirection: 'column',
-      padding: '32px', boxSizing: 'border-box', flexShrink: 0,
-    }}>
-      <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(26,26,26,0.35)', marginBottom: '18px', fontFamily: 'system-ui, sans-serif' }}>
-        shiftstories.fyi · Customer Review
+    <div style={{ width: '320px', height: '320px', background: BG, display: 'flex', flexDirection: 'column', padding: '26px', boxSizing: 'border-box', flexShrink: 0 }}>
+      <div style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(26,26,26,0.35)', marginBottom: '14px', fontFamily: 'system-ui, sans-serif' }}>shiftstories.fyi · Customer Review</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK, fontFamily: 'system-ui, sans-serif', flex: 1, paddingRight: '10px', lineHeight: 1.3 }}>{story.descriptor.toUpperCase()}</div>
+        <div style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1.5px solid ${INK}`, padding: '2px 6px', color: INK, whiteSpace: 'nowrap', fontFamily: 'system-ui, sans-serif' }}>Verified Review</div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK, fontFamily: 'system-ui, sans-serif', flex: 1, paddingRight: '10px', lineHeight: 1.3 }}>
-          {story.descriptor.toUpperCase()}
-        </div>
-        <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', border: `1.5px solid ${INK}`, padding: '3px 7px', color: INK, whiteSpace: 'nowrap', fontFamily: 'system-ui, sans-serif' }}>
-          Verified Review
-        </div>
-      </div>
-      <div style={{ marginBottom: '14px' }}><StarRating count={stars} /></div>
-      <div style={{ height: '1.5px', background: INK, marginBottom: '16px', opacity: 0.12 }} />
-      <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK, marginBottom: '12px', fontFamily: 'system-ui, sans-serif' }}>
-        {story.category} ·
-      </div>
-      <div style={{ fontSize: '13px', lineHeight: 1.65, color: INK, flex: 1, fontStyle: 'italic', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical' as const }}>
-        "{story.tale}"
-      </div>
-      <div style={{ marginTop: 'auto', paddingTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1.5px solid rgba(26,26,26,0.12)` }}>
-        <span style={{ fontSize: '10px', color: 'rgba(26,26,26,0.4)', fontFamily: 'system-ui, sans-serif', letterSpacing: '0.04em' }}>{story.venue}</span>
-        <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '-0.3px', color: INK, fontFamily: 'system-ui, sans-serif' }}>SHIFT<span style={{ opacity: 0.4 }}>STORIES</span></span>
+      <div style={{ marginBottom: '10px' }}><StarRating count={stars} /></div>
+      <div style={{ height: '1px', background: INK, marginBottom: '12px', opacity: 0.1 }} />
+      <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,26,0.5)', marginBottom: '10px', fontFamily: 'system-ui, sans-serif' }}>{story.category} ·</div>
+      <div style={{ fontSize: '11px', lineHeight: 1.6, color: INK, flex: 1, fontStyle: 'italic', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical' as const }}>"{story.tale}"</div>
+      <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(26,26,26,0.1)' }}>
+        <span style={{ fontSize: '8px', color: 'rgba(26,26,26,0.4)', fontFamily: 'system-ui, sans-serif' }}>{story.venue}</span>
+        <span style={{ fontSize: '10px', fontWeight: 900, color: INK, fontFamily: 'system-ui, sans-serif' }}>SHIFT<span style={{ opacity: 0.4 }}>STORIES</span></span>
       </div>
     </div>
   )
@@ -79,11 +212,9 @@ export default function Home() {
   const [sameCounts, setSameCounts] = useState<Record<number, number>>({})
   const [samed, setSamed] = useState<Record<number, boolean>>({})
   const [cardStory, setCardStory] = useState<Story | null>(null)
-  const [downloading, setDownloading] = useState(false)
   const [form, setForm] = useState({ descriptor: '', category: 'Unhinged', tale: '', venue: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchStories(0)
@@ -129,18 +260,12 @@ export default function Home() {
     }
   }
 
-  async function handleDownloadCard() {
-    if (!cardRef.current) return
-    setDownloading(true)
-    try {
-      const html2canvas = (await import('html2canvas')).default
-      const canvas = await html2canvas(cardRef.current, { scale: 3, useCORS: true, backgroundColor: BG })
-      const link = document.createElement('a')
-      link.download = 'shiftstory-card.png'
-      link.href = canvas.toDataURL('image/png')
-      link.click()
-    } catch (e) { console.error(e) }
-    setDownloading(false)
+  function handleDownloadCard(story: Story) {
+    const dataUrl = drawCard(story)
+    const link = document.createElement('a')
+    link.download = `shiftstory-${story.id}.png`
+    link.href = dataUrl
+    link.click()
   }
 
   function getSorted(stories: Story[]) {
@@ -239,21 +364,22 @@ export default function Home() {
 
         {/* Card modal */}
         {cardStory && (
-          <div onClick={() => setCardStory(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.75)', zIndex: 30, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '20px', gap: '16px' }}>
+          <div onClick={() => setCardStory(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.8)', zIndex: 30, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '20px', gap: '20px' }}>
             <div onClick={e => e.stopPropagation()}>
-              <div ref={cardRef}>
-                <StoryCard story={cardStory} />
-              </div>
+              <StoryCardPreview story={cardStory} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleDownloadCard} disabled={downloading} style={{ background: BG, color: INK, border: 'none', borderRadius: '4px', padding: '10px 22px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: downloading ? 0.6 : 1 }}>
-                {downloading ? 'Saving...' : '⬇ Download card'}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadCard(cardStory) }}
+                style={{ background: BG, color: INK, border: 'none', borderRadius: '4px', padding: '11px 24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                ⬇ Download card
               </button>
-              <button onClick={() => setCardStory(null)} style={{ background: 'transparent', color: BG, border: `1.5px solid rgba(240,237,230,0.3)`, borderRadius: '4px', padding: '10px 22px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setCardStory(null)} style={{ background: 'transparent', color: BG, border: '1.5px solid rgba(240,237,230,0.3)', borderRadius: '4px', padding: '11px 24px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Close
               </button>
             </div>
-            <p style={{ fontSize: '11px', color: 'rgba(240,237,230,0.4)', fontFamily: 'system-ui, sans-serif' }}>Tap outside to close</p>
+            <p style={{ fontSize: '11px', color: 'rgba(240,237,230,0.35)', fontFamily: 'system-ui, sans-serif' }}>Tap outside to close</p>
           </div>
         )}
 
@@ -300,4 +426,4 @@ export default function Home() {
       </div>
     </div>
   )
-}
+                                                                          }
